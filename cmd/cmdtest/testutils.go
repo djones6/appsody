@@ -17,8 +17,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -26,7 +24,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 
 	"github.com/appsody/appsody/cmd"
@@ -114,27 +111,20 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 
 	args = append(args, "-v")
 
-	// setup pipes to capture stdout and stderr of the command
-	stdoutReader, stdoutWriter, _ := os.Pipe()
-	os.Stdout = stdoutWriter
-	stderrReader, stderrWriter, _ := os.Pipe()
-	os.Stderr = stderrWriter
+	// setup pipe to capture stdout and stderr of the command
+	outReader, outWriter, _ := os.Pipe()
+	os.Stdout = outWriter
+	os.Stderr = outWriter
 
-	// setup writer and buffer
-	var outBuf bytes.Buffer
-	bufferWriter := io.Writer(&outBuf)
-
-	// in the background, copy the output
-	var wg sync.WaitGroup
-	wg.Add(2)
-	var ioCopyErr error
+	outScanner := bufio.NewScanner(outReader)
+	var outBuffer bytes.Buffer
 	go func() {
-		_, ioCopyErr = io.Copy(bufferWriter, stdoutReader)
-		wg.Done()
-	}()
-	go func() {
-		_, ioCopyErr = io.Copy(bufferWriter, stderrReader)
-		wg.Done()
+		for outScanner.Scan() {
+			out := outScanner.Bytes()
+			outBuffer.Write(out)
+			outBuffer.WriteByte('\n')
+			t.Log(string(out))
+		}
 	}()
 
 	err := cmd.ExecuteE("vlatest", workingDir, args)
@@ -143,22 +133,11 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 	os.Stdout = realStdout
 	os.Stderr = realStderr
 
-	// close the writers first
-	stdoutWriter.Close()
-	stderrWriter.Close()
-	// now wait for the io.Copy threads to finish
-	wg.Wait()
-	// finally close the readers
-	stdoutReader.Close()
-	stderrReader.Close()
+	// close the reader and writer
+	outWriter.Close()
+	outReader.Close()
 
-	if ioCopyErr != nil {
-		return outBuf.String(), fmt.Errorf("Problem copying command output to the writers: %v", ioCopyErr)
-	}
-	// Write output to test logger
-	t.Log(outBuf.String())
-
-	return outBuf.String(), err
+	return outBuffer.String(), err
 }
 
 // ParseRepoList takes in the string from 'appsody repo list' command
