@@ -46,6 +46,7 @@ func TestGenYAML(t *testing.T) {
 			testPortNum := test.testPortNum
 			testGetter := test.yamlTemplateGetter
 			testPullPolicy := test.testPullPolicy
+			// Need to redirect stdout/err here
 			yamlFileName, err := cmd.GenKnativeYaml(testGetter(), testPortNum, testServiceName, testImageName, testPullPolicy, "app-deploy.yaml", false)
 			if err != nil {
 				t.Fatal("Can't generate the YAML for KNative serving deploy. Error: ", err)
