@@ -140,7 +140,7 @@ func TestBuildLabels(t *testing.T) {
 	t.Log("Created project dir: " + projectDir)
 
 	// appsody init
-	_, err = cmdtest.RunAppsodyCmdExec([]string{"init", "nodejs-express"}, projectDir, t)
+	_, err = cmdtest.RunAppsodyCmd([]string{"init", "nodejs-express"}, projectDir, t)
 	t.Log("Running appsody init...")
 	if err != nil {
 		t.Fatal(err)
@@ -157,7 +157,7 @@ func TestBuildLabels(t *testing.T) {
 	runChannel := make(chan error)
 	imageName := "testbuildimage"
 	go func() {
-		_, err = cmdtest.RunAppsodyCmdExec([]string{"build", "--tag", imageName}, projectDir, t)
+		_, err = cmdtest.RunAppsodyCmd([]string{"build", "--tag", imageName}, projectDir, t)
 		runChannel <- err
 	}()
 

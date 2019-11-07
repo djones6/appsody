@@ -39,11 +39,13 @@ type Repository struct {
 	URL  string
 }
 
-// RunAppsodyCmdExec runs the appsody CLI with the given args in a new process
+// RunAppsodyCmdExecDeprecated runs the appsody CLI with the given args in a new process
+// Deprecated: use RunAppsodyCmd instead, which does not require a new process or output
+// redirection.
 // The stdout and stderr are captured, printed, and returned
 // args will be passed to the appsody command
 // workingDir will be the directory the command runs in
-func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, error) {
+func RunAppsodyCmdExecDeprecated(args []string, workingDir string, t *testing.T) (string, error) {
 	execDir, err := os.Getwd()
 	if err != nil {
 		return "", err
