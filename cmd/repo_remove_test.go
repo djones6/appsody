@@ -21,6 +21,8 @@ import (
 )
 
 func TestRepoRemoveError(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	args := []string{"repo", "remove"}
 	output, _ := cmdtest.RunAppsodyCmd(args, ".", t)

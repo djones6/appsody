@@ -34,6 +34,8 @@ import (
 // nothing is broken.
 
 func TestExtract(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 

@@ -22,6 +22,8 @@ import (
 )
 
 func TestRunWithDockerOptionsRegex(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var runOutput string
 	// create a temporary dir to create the project and run the test

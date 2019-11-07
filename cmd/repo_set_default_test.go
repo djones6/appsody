@@ -21,6 +21,8 @@ import (
 )
 
 func TestRepoSetDefaultErrors(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	args := []string{"repo", "set-default"}
 	output, _ := cmdtest.RunAppsodyCmd(args, ".", t)

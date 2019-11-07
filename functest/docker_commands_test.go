@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	cmd "github.com/appsody/appsody/cmd"
+	"github.com/appsody/appsody/cmd/cmdtest"
 )
 
 var invalidDockerCmdsTest = []struct {
@@ -30,6 +31,8 @@ var invalidDockerCmdsTest = []struct {
 }
 
 func TestDockerInspect(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	for _, test := range invalidDockerCmdsTest {
 

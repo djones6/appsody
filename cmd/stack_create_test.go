@@ -22,6 +22,9 @@ import (
 )
 
 func TestStackCreateSampleStack(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -46,6 +49,9 @@ func TestStackCreateSampleStack(t *testing.T) {
 }
 
 func TestStackCreateWithCopyTag(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -70,6 +76,9 @@ func TestStackCreateWithCopyTag(t *testing.T) {
 }
 
 func TestStackCreateInvalidStackCase1(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -90,6 +99,9 @@ func TestStackCreateInvalidStackCase1(t *testing.T) {
 }
 
 func TestStackCreateInvalidStackCase2(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -110,6 +122,9 @@ func TestStackCreateInvalidStackCase2(t *testing.T) {
 }
 
 func TestStackCreateInvalidStackCase3(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -130,6 +145,9 @@ func TestStackCreateInvalidStackCase3(t *testing.T) {
 }
 
 func TestStackCreateInvalidStackCase4(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)
@@ -150,6 +168,9 @@ func TestStackCreateInvalidStackCase4(t *testing.T) {
 }
 
 func TestStackCreateInvalidStackName(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing_stack")
 	if err != nil {
 		t.Fatal(err)
@@ -170,6 +191,9 @@ func TestStackCreateInvalidStackName(t *testing.T) {
 }
 
 func TestStackCreateInvalidLongStackName(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"stack", "create", "testing_stacktesting-stacktesting-stacktesting-stacktesting-stacktesting-stacktesting-stacktesting-stacktesting-stacktesting-stack"}
 	_, err := cmdtest.RunAppsodyCmdExec(args, ".", t)
 
@@ -185,6 +209,9 @@ func TestStackCreateInvalidLongStackName(t *testing.T) {
 }
 
 func TestStackAlreadyExists(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	err := os.RemoveAll("testing-stack")
 	if err != nil {
 		t.Fatal(err)

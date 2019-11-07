@@ -15,6 +15,8 @@
 package cmd_test
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -22,6 +24,7 @@ import (
 	"testing"
 
 	cmd "github.com/appsody/appsody/cmd"
+	"github.com/appsody/appsody/cmd/cmdtest"
 )
 
 var yamlGenTests = []struct {
@@ -38,6 +41,8 @@ var yamlGenTests = []struct {
 
 // requires clean dir
 func TestGenYAML(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	for numTest, test := range yamlGenTests {
 		t.Run(fmt.Sprintf("Test YAML template %d", numTest), func(t *testing.T) {
@@ -46,8 +51,36 @@ func TestGenYAML(t *testing.T) {
 			testPortNum := test.testPortNum
 			testGetter := test.yamlTemplateGetter
 			testPullPolicy := test.testPullPolicy
-			// Need to redirect stdout/err here
+
+			// Ideally we would configure cmd to log to somewhere other than stdout. For now,
+			// setup pipe to capture stdout and stderr of the command.
+			realStdout := os.Stdout
+			realStderr := os.Stderr
+			outReader, outWriter, _ := os.Pipe()
+			os.Stdout = outWriter
+			os.Stderr = outWriter
+
+			outScanner := bufio.NewScanner(outReader)
+			var outBuffer bytes.Buffer
+			go func() {
+				for outScanner.Scan() {
+					out := outScanner.Bytes()
+					outBuffer.Write(out)
+					outBuffer.WriteByte('\n')
+					t.Log(string(out))
+				}
+			}()
+
 			yamlFileName, err := cmd.GenKnativeYaml(testGetter(), testPortNum, testServiceName, testImageName, testPullPolicy, "app-deploy.yaml", false)
+
+			// restore stdout and stderr
+			os.Stdout = realStdout
+			os.Stderr = realStderr
+
+			// close the reader and writer
+			outWriter.Close()
+			outReader.Close()
+
 			if err != nil {
 				t.Fatal("Can't generate the YAML for KNative serving deploy. Error: ", err)
 			}
@@ -132,6 +165,8 @@ var validProjectNameTests = []string{
 }
 
 func TestValidProjectNames(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	for _, test := range validProjectNameTests {
 		t.Run(fmt.Sprintf("Test Valid Project Name \"%s\"", test), func(t *testing.T) {
@@ -177,6 +212,8 @@ var invalidProjectNameTests = []struct {
 }
 
 func TestInvalidProjectNames(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	for _, test := range invalidProjectNameTests {
 		t.Run(fmt.Sprintf("Test Invalid Project Name \"%s\"", test.input), func(t *testing.T) {
@@ -210,6 +247,8 @@ var invalidCmdsTest = []struct {
 }
 
 func TestInvalidCmdOutput(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	for _, test := range invalidCmdsTest {
 
@@ -247,6 +286,9 @@ var convertLabelTests = []struct {
 }
 
 func TestConvertLabelToKubeFormat(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	for _, test := range convertLabelTests {
 		t.Run(test.input, func(t *testing.T) {
 			output, err := cmd.ConvertLabelToKubeFormat(test.input)
@@ -268,6 +310,9 @@ var invalidConvertLabelTests = []string{
 }
 
 func TestInvalidConvertLabelToKubeFormat(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	for _, test := range invalidConvertLabelTests {
 		t.Run(test, func(t *testing.T) {
 			_, err := cmd.ConvertLabelToKubeFormat(test)

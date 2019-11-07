@@ -28,6 +28,9 @@ var stacksList = os.Getenv("STACKSLIST")
 
 // Test appsody run of the nodejs-express stack and check the http://localhost:3000/health endpoint
 func TestRun(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// first add the test repo index
 	_, cleanup, err := cmdtest.AddLocalFileRepo("LocalTestRepo", "../cmd/testdata/index.yaml", t)
 	if err != nil {
@@ -96,6 +99,8 @@ func TestRun(t *testing.T) {
 
 // Simple test for appsody run command. A future enhancement would be to verify the endpoint or console output if there is no web endpoint
 func TestRunSimple(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 

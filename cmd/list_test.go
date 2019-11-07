@@ -22,6 +22,9 @@ import (
 )
 
 func TestList(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// tests that would have run before this and crashed could leave the repo
 	// in a bad state - mostly leading to: "a repo with this name already exists."
 	// so clean it up pro-actively, ignore any errors.
@@ -50,6 +53,9 @@ func TestList(t *testing.T) {
 
 // test the v2 list functionality
 func TestListV2(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// first add the test repo index
 	var err error
 	var output string
@@ -92,6 +98,9 @@ func TestListV2(t *testing.T) {
 }
 
 func TestListJson(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"list", "-o", "json"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 
@@ -109,6 +118,9 @@ func TestListJson(t *testing.T) {
 }
 
 func TestListYaml(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"list", "-o", "yaml"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 
@@ -126,6 +138,9 @@ func TestListYaml(t *testing.T) {
 }
 
 func TestListJsonSingleRepository(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"list", "incubator", "-o", "yaml"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 

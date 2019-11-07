@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -37,6 +38,17 @@ var realStderr = os.Stderr
 type Repository struct {
 	Name string
 	URL  string
+}
+
+// SetUp performs per-test setup and returns a corresponding teardown function that
+// should be executed in a defer statement.
+func SetUp(t *testing.T) func(t *testing.T) {
+	fmt.Printf("Running: %s\n", t.Name())
+	return func(t *testing.T) {
+		if !t.Failed() {
+			fmt.Printf("Passed: %s\n", t.Name())
+		}
+	}
 }
 
 // RunAppsodyCmdExec runs the appsody CLI with the given args in a new process
@@ -110,6 +122,9 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, error) {
 
 	args = append(args, "-v")
+
+	// Write description of command directly to stdout (to indicate test progress)
+	fmt.Printf("%s: Running appsody command: %s\n", t.Name(), args)
 
 	// setup pipe to capture stdout and stderr of the command
 	outReader, outWriter, _ := os.Pipe()

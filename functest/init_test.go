@@ -16,7 +16,6 @@ package functest
 
 import (
 	"errors"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -27,6 +26,9 @@ import (
 
 // requires clean dir
 func TestInit(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -43,6 +45,8 @@ func TestInit(t *testing.T) {
 
 //This test makes sure that no project creation occurred because app.js existed prior to the call
 func TestNoOverwrite(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -88,6 +92,8 @@ func shouldNotExist(file string, t *testing.T) {
 
 //This test makes sure that no project creation occurred because app.js existed prior to the call
 func TestOverwrite(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var fileInfoFinal os.FileInfo
 	// create a temporary dir to create the project and run the test
@@ -137,6 +143,9 @@ func TestOverwrite(t *testing.T) {
 
 //This test makes sure that no files are created except .appsody-config.yaml
 func TestNoTemplate(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	var fileInfoFinal os.FileInfo
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -183,6 +192,8 @@ func TestNoTemplate(t *testing.T) {
 
 // the command should work despite existing artifacts
 func TestWhiteList(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -261,6 +272,9 @@ func appsodyResultsCheck(projectDir string, t *testing.T) {
 }
 
 func TestInitV2WithDefaultRepoSpecified(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -276,6 +290,9 @@ func TestInitV2WithDefaultRepoSpecified(t *testing.T) {
 }
 
 func TestInitV2WithNonDefaultRepoSpecified(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -290,6 +307,9 @@ func TestInitV2WithNonDefaultRepoSpecified(t *testing.T) {
 }
 
 func TestInitV2WithBadStackSpecified(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -305,6 +325,9 @@ func TestInitV2WithBadStackSpecified(t *testing.T) {
 }
 
 func TestInitV2WithBadRepoSpecified(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -322,6 +345,9 @@ func TestInitV2WithBadRepoSpecified(t *testing.T) {
 }
 
 func TestInitV2WithDefaultRepoSpecifiedTemplateNonDefault(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -337,6 +363,9 @@ func TestInitV2WithDefaultRepoSpecifiedTemplateNonDefault(t *testing.T) {
 }
 
 func TestInitV2WithDefaultRepoSpecifiedTemplateDefault(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -351,6 +380,9 @@ func TestInitV2WithDefaultRepoSpecifiedTemplateDefault(t *testing.T) {
 }
 
 func TestInitV2WithNoRepoSpecifiedTemplateDefault(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
@@ -365,6 +397,8 @@ func TestInitV2WithNoRepoSpecifiedTemplateDefault(t *testing.T) {
 	appsodyResultsCheck(projectDir, t)
 }
 func TestNone(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -383,6 +417,8 @@ func TestNone(t *testing.T) {
 }
 
 func TestNoneAndNoTemplate(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -401,6 +437,8 @@ func TestNoneAndNoTemplate(t *testing.T) {
 }
 
 func TestNoTemplateOnly(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
@@ -419,11 +457,13 @@ func TestNoTemplateOnly(t *testing.T) {
 }
 
 func TestNoTemplateAndSimple(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)
 	defer os.RemoveAll(projectDir)
-	log.Println("Created project dir: " + projectDir)
+	t.Log("Created project dir: " + projectDir)
 
 	// appsody init nodejs-express
 	var output string

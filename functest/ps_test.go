@@ -24,6 +24,9 @@ import (
 )
 
 func TestPS(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	//
 	// Test Plan:
 	//

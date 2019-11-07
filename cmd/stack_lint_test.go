@@ -26,6 +26,9 @@ import (
 )
 
 func TestAPPSODY_RUNMissingInDockerfileStack(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	restoreLine := ""
 	file, err := ioutil.ReadFile("../cmd/testdata/test-stack/image/Dockerfile-stack")
 	if err != nil {
@@ -69,6 +72,9 @@ func TestAPPSODY_RUNMissingInDockerfileStack(t *testing.T) {
 }
 
 func TestAPPSODY_MOUNTSMissingInDockerfileStack(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	restoreLine := ""
 	file, err := ioutil.ReadFile("../cmd/testdata/test-stack/image/Dockerfile-stack")
 	if err != nil {
@@ -112,6 +118,9 @@ func TestAPPSODY_MOUNTSMissingInDockerfileStack(t *testing.T) {
 }
 
 func TestAPPSODY_WATCH_DIRPRESENTAndONCHANGEMissingInDockerfileStack(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	restoreLine := ""
 	file, err := ioutil.ReadFile("../cmd/testdata/test-stack/image/Dockerfile-stack")
 
@@ -169,6 +178,9 @@ func TestAPPSODY_WATCH_DIRPRESENTAndONCHANGEMissingInDockerfileStack(t *testing.
 }
 
 func Test_KILLValue(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	restoreLine := ""
 	file, err := ioutil.ReadFile("../cmd/testdata/test-stack/image/Dockerfile-stack")
 
@@ -214,6 +226,9 @@ func Test_KILLValue(t *testing.T) {
 }
 
 func Test_APPSODY_REGEXValue(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	restoreLine := ""
 	file, err := ioutil.ReadFile("../cmd/testdata/test-stack/image/Dockerfile-stack")
 
@@ -258,6 +273,9 @@ func Test_APPSODY_REGEXValue(t *testing.T) {
 	}
 }
 func TestLintWithValidStack(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	currentDir, _ := os.Getwd()
 	testStackPath := filepath.Join(currentDir, "testdata", "test-stack")
 	args := []string{"stack", "lint"}
@@ -270,6 +288,9 @@ func TestLintWithValidStack(t *testing.T) {
 }
 
 func TestLintWithMissingConfig(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	currentDir, _ := os.Getwd()
 	testStackPath := filepath.Join(currentDir, "testdata", "test-stack")
 	args := []string{"stack", "lint"}
@@ -288,6 +309,9 @@ func TestLintWithMissingConfig(t *testing.T) {
 }
 
 func TestLintWithMissingProject(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	currentDir, _ := os.Getwd()
 	testStackPath := filepath.Join(currentDir, "testdata", "test-stack")
 	args := []string{"stack", "lint"}
@@ -310,6 +334,9 @@ func TestLintWithMissingProject(t *testing.T) {
 }
 
 func TestLintWithMissingFile(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	currentDir, _ := os.Getwd()
 	testStackPath := filepath.Join(currentDir, "testdata", "test-stack")
 	args := []string{"stack", "lint"}

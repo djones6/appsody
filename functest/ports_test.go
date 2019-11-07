@@ -25,6 +25,8 @@ import (
 
 // test port mapping in dry run mode
 func TestPortMap(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var runOutput string
 	// create a temporary dir to create the project and run the test
@@ -50,6 +52,8 @@ func TestPortMap(t *testing.T) {
 
 // This test tests the setting of --publish-all in dry run mode
 func TestPublishAll(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var runOutput string
 
@@ -74,6 +78,8 @@ func TestPublishAll(t *testing.T) {
 
 // This test tests the setting of --network
 func TestRunWithNetwork(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var runOutput string
 	// create a temporary dir to create the project and run the test
@@ -97,6 +103,8 @@ func TestRunWithNetwork(t *testing.T) {
 
 // This test tests the setting of --docker-options
 func TestRunWithDockerOptions(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	var runOutput string
 	// create a temporary dir to create the project and run the test

@@ -23,6 +23,8 @@ import (
 
 // Test parsing environment variable with stack info
 func TestParser(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 	if stacksList == "" {
@@ -51,6 +53,8 @@ func TestParser(t *testing.T) {
 
 // Simple test for appsody deploy command. A future enhancement would be to configure a valid deployment environment
 func TestDeploySimple(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 

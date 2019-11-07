@@ -30,6 +30,9 @@ var repoListTests = []struct {
 }
 
 func TestRepoList(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	for _, tt := range repoListTests {
 		// call t.Run so that we can name and report on individual tests
 		t.Run(tt.configFile, func(t *testing.T) {
@@ -53,6 +56,9 @@ func TestRepoList(t *testing.T) {
 }
 
 func TestRepoListJson(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"repo", "list", "--config", "testdata/multiple_repository_config/config.yaml", "-o", "json"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 	if err != nil {
@@ -67,6 +73,9 @@ func TestRepoListJson(t *testing.T) {
 }
 
 func TestRepoListYaml(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	args := []string{"repo", "list", "--config", "testdata/multiple_repository_config/config.yaml", "-o", "yaml"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 	if err != nil {

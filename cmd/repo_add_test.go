@@ -21,6 +21,9 @@ import (
 )
 
 func TestRepoAdd(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// see how many repos we currently have
 	output, err := cmdtest.RunAppsodyCmd([]string{"repo", "list"}, ".", t)
 	if err != nil {
@@ -71,6 +74,9 @@ var repoAddErrorTests = []struct {
 }
 
 func TestRepoAddErrors(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	for _, tt := range repoAddErrorTests {
 		// call t.Run so that we can name and report on individual tests
 		t.Run(tt.testName, func(t *testing.T) {

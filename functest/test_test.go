@@ -26,6 +26,8 @@ import (
 
 // Simple test for appsody test command. A future enhancement would be to verify the test output
 func TestTestSimple(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 

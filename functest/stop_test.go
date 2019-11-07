@@ -25,6 +25,9 @@ import (
 )
 
 func TestStopWithoutName(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// first add the test repo index
 	_, cleanup, err := cmdtest.AddLocalFileRepo("LocalTestRepo", "../cmd/testdata/index.yaml", t)
 	if err != nil {
@@ -112,6 +115,8 @@ func TestStopWithoutName(t *testing.T) {
 }
 
 func TestStopWithName(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	// create a temporary dir to create the project and run the test
 	projectDir := cmdtest.GetTempProjectDir(t)

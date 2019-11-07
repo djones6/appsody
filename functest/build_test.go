@@ -15,7 +15,6 @@ package functest
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -28,6 +27,8 @@ import (
 
 // Simple test for appsody build command. A future enhancement would be to verify the image that gets built.
 func TestBuildSimple(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
 
 	t.Log("stacksList is: ", stacksList)
 
@@ -124,6 +125,9 @@ var appsodyStackLabels = []string{
 }
 
 func TestBuildLabels(t *testing.T) {
+	TearDown := cmdtest.SetUp(t)
+	defer TearDown(t)
+
 	// first add the test repo index
 	_, cleanup, err := cmdtest.AddLocalFileRepo("LocalTestRepo", "../cmd/testdata/index.yaml", t)
 	if err != nil {
@@ -227,6 +231,6 @@ func TestBuildLabels(t *testing.T) {
 func deleteImage(imageName string, t *testing.T) {
 	_, err := cmdtest.RunDockerCmdExec([]string{"image", "rm", imageName}, t)
 	if err != nil {
-		fmt.Printf("Ignoring error running docker image rm: %s", err)
+		t.Logf("Ignoring error running docker image rm: %s", err)
 	}
 }
