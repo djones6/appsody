@@ -15,6 +15,7 @@
 package cmd_test
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,12 +47,24 @@ func TestGenYAML(t *testing.T) {
 			testPortNum := test.testPortNum
 			testGetter := test.yamlTemplateGetter
 			testPullPolicy := test.testPullPolicy
-			// Need to redirect stdout/err here
+
+			// Buffer cmd output, to be logged if there is a failure
+			var outBuffer bytes.Buffer
+			cmd.SetStdout(&outBuffer)
+			cmd.SetStderr(&outBuffer)
+			defer func() {
+				cmd.SetStdout(os.Stdout)
+				cmd.SetStderr(os.Stderr)
+			}()
+
 			yamlFileName, err := cmd.GenKnativeYaml(testGetter(), testPortNum, testServiceName, testImageName, testPullPolicy, "app-deploy.yaml", false)
+
 			if err != nil {
+				t.Log(outBuffer.String())
 				t.Fatal("Can't generate the YAML for KNative serving deploy. Error: ", err)
 			}
 			if _, err := os.Stat(yamlFileName); os.IsNotExist(err) {
+				t.Log(outBuffer.String())
 				t.Fatal("Didn't find the file ", yamlFileName)
 			} else { //clean up
 				os.RemoveAll(yamlFileName)

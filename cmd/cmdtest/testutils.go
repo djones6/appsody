@@ -30,9 +30,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var realStdout = os.Stdout
-var realStderr = os.Stderr
-
 // Repository struct represents an appsody repository
 type Repository struct {
 	Name string
@@ -113,31 +110,16 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 
 	args = append(args, "-v")
 
-	// setup pipe to capture stdout and stderr of the command
-	outReader, outWriter, _ := os.Pipe()
-	os.Stdout = outWriter
-	os.Stderr = outWriter
-
-	outScanner := bufio.NewScanner(outReader)
+	// Direct cmd console output to a buffer
 	var outBuffer bytes.Buffer
-	go func() {
-		for outScanner.Scan() {
-			out := outScanner.Bytes()
-			outBuffer.Write(out)
-			outBuffer.WriteByte('\n')
-			t.Log(string(out))
-		}
+	cmd.SetStdout(&outBuffer)
+	cmd.SetStderr(&outBuffer)
+	defer func() {
+		cmd.SetStdout(os.Stdout)
+		cmd.SetStderr(os.Stderr)
 	}()
 
 	err := cmd.ExecuteE("vlatest", workingDir, args)
-
-	// restore stdout and stderr
-	os.Stdout = realStdout
-	os.Stderr = realStderr
-
-	// close the reader and writer
-	outWriter.Close()
-	outReader.Close()
 
 	return outBuffer.String(), err
 }
