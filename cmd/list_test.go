@@ -106,6 +106,9 @@ func TestListJson(t *testing.T) {
 	}
 
 	testContentsListOutput(t, list, output)
+	if t.Failed() {
+		t.Logf("Output from CLI:\n%s", output)
+	}
 }
 
 func TestListYaml(t *testing.T) {
@@ -123,9 +126,12 @@ func TestListYaml(t *testing.T) {
 	}
 
 	testContentsListOutput(t, list, output)
+	if t.Failed() {
+		t.Logf("Output from CLI:\n%s", output)
+	}
 }
 
-func TestListJsonSingleRepository(t *testing.T) {
+func TestListYamlSingleRepository(t *testing.T) {
 	args := []string{"list", "incubator", "-o", "yaml"}
 	output, err := cmdtest.RunAppsodyCmd(args, ".", t)
 
@@ -140,37 +146,36 @@ func TestListJsonSingleRepository(t *testing.T) {
 	}
 
 	if len(list.Repositories) != 1 && list.Repositories[0].Name == "incubator" {
-		t.Errorf("Could not find repository incubator! CLI output:\n%s", output)
+		t.Error("Could not find repository 'incubator'")
 	}
 }
 
 func testContentsListOutput(t *testing.T, list cmd.IndexOutputFormat, output string) {
 	if list.APIVersion == "" {
-		t.Errorf("Could not find APIVersion! CLI output:\n%s", output)
+		t.Error("Could not find 'APIVersion'")
 	}
 
 	if len(list.Repositories) != 2 {
-		t.Errorf("Expected two repositories! CLI output:\n%s", output)
+		t.Errorf("Expected 2 repositories to be defined, but found %d", len(list.Repositories))
 	}
 
 	for _, repo := range list.Repositories {
 		if len(repo.Stacks) < 1 {
-			t.Errorf("Expected repository %s to contain stacks! CLI output:\n%s", repo.Name, output)
+			t.Errorf("Repository '%s' does not contain any stacks", repo.Name)
 		}
 
 		for _, stack := range repo.Stacks {
 			if stack.ID == "" {
-				t.Errorf("Found stack with missing ID! CLI output:\n%s", output)
+				t.Errorf("A stack in repo '%s' has no 'ID'", repo.Name)
 			}
-
 			if stack.Version == "" {
-				t.Errorf("Found stack with missing Version! CLI output:\n%s", output)
+				t.Errorf("Stack '%s' in repo '%s' has no 'Version'", stack.ID, repo.Name)
 			}
 			if stack.Description == "" {
-				t.Errorf("Found stack with missing Description! CLI output:\n%s", output)
+				t.Errorf("Stack '%s' in repo '%s' has no 'Description'", stack.ID, repo.Name)
 			}
 			if len(stack.Templates) == 0 {
-				t.Errorf("Found stack with missing Templates! CLI output:\n%s", output)
+				t.Errorf("Stack '%s' in repo '%s' has no 'Templates'", stack.ID, repo.Name)
 			}
 		}
 	}
