@@ -110,12 +110,6 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 
 	// Direct cmd console output to a buffer
 	outReader, outWriter, _ := os.Pipe()
-	cmd.SetStdout(outWriter)
-	cmd.SetStderr(outWriter)
-	defer func() {
-		cmd.SetStdout(os.Stdout)
-		cmd.SetStderr(os.Stderr)
-	}()
 
 	// copy the output to the buffer, and also to the test log
 	var outBuffer bytes.Buffer
@@ -129,7 +123,7 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 		}
 	}()
 
-	err := cmd.ExecuteE("vlatest", workingDir, args)
+	err := cmd.ExecuteE("vlatest", workingDir, outWriter, outWriter, args)
 
 	// close the reader and writer
 	outWriter.Close()

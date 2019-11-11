@@ -84,12 +84,12 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 - Adds/updates the "dev.local" repository of your Appsody configuration`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			Info.Log("******************************************")
-			Info.Log("Running appsody stack package")
-			Info.Log("******************************************")
+			rootConfig.Info.Log("******************************************")
+			rootConfig.Info.Log("Running appsody stack package")
+			rootConfig.Info.Log("******************************************")
 
 			stackPath := rootConfig.ProjectDir
-			Debug.Log("stackPath is: ", stackPath)
+			rootConfig.Debug.Log("stackPath is: ", stackPath)
 
 			// check for templates dir, error out if its not there
 			check, err := Exists("templates")
@@ -102,10 +102,10 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 			}
 
 			appsodyHome := getHome(rootConfig)
-			Debug.Log("appsodyHome is:", appsodyHome)
+			rootConfig.Debug.Log("appsodyHome is:", appsodyHome)
 
 			devLocal := filepath.Join(appsodyHome, "stacks", "dev.local")
-			Debug.Log("devLocal is: ", devLocal)
+			rootConfig.Debug.Log("devLocal is: ", devLocal)
 
 			// create the devLocal directory in appsody home
 			err = os.MkdirAll(devLocal, os.FileMode(0755))
@@ -115,10 +115,10 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 
 			// get the stack name from the stack path
 			stackID := filepath.Base(stackPath)
-			Debug.Log("stackName is: ", stackID)
+			rootConfig.Debug.Log("stackName is: ", stackID)
 
 			indexFileLocal := filepath.Join(devLocal, "dev.local-index.yaml")
-			Debug.Log("indexFileLocal is: ", indexFileLocal)
+			rootConfig.Debug.Log("indexFileLocal is: ", indexFileLocal)
 
 			// create IndexYaml struct and populate the APIVersion and Stacks header
 			var indexYaml IndexYaml
@@ -130,7 +130,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 			}
 			if check {
 				// index file exists already so see if it contains the stack data and remove it if found
-				Debug.Log("Index file exists already")
+				rootConfig.Debug.Log("Index file exists already")
 
 				source, err := ioutil.ReadFile(indexFileLocal)
 				if err != nil {
@@ -146,7 +146,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 				foundStack := -1
 				for i, stack := range indexYaml.Stacks {
 					if stack.ID == stackID {
-						Debug.Log("Existing stack: " + stackID + "found")
+						rootConfig.Debug.Log("Existing stack: " + stackID + "found")
 						foundStack = i
 						break
 					}
@@ -181,10 +181,10 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 			buildImage := imageNamespace + "/" + stackID + ":SNAPSHOT"
 
 			imageDir := filepath.Join(stackPath, "image")
-			Debug.Log("imageDir is: ", imageDir)
+			rootConfig.Debug.Log("imageDir is: ", imageDir)
 
 			dockerFile := filepath.Join(imageDir, "Dockerfile-stack")
-			Debug.Log("dockerFile is: ", dockerFile)
+			rootConfig.Debug.Log("dockerFile is: ", dockerFile)
 
 			cmdArgs := []string{"-t", buildImage}
 
@@ -198,11 +198,11 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 			}
 
 			cmdArgs = append(cmdArgs, "-f", dockerFile, imageDir)
-			Debug.Log("cmdArgs is: ", cmdArgs)
+			rootConfig.Debug.Log("cmdArgs is: ", cmdArgs)
 
-			Info.Log("Running docker build")
+			rootConfig.Info.Log("Running docker build")
 
-			err = DockerBuild(cmdArgs, DockerLog, rootConfig.Verbose, rootConfig.Dryrun)
+			err = DockerBuild(rootConfig, cmdArgs, rootConfig.DockerLog)
 			if err != nil {
 				return errors.Errorf("Error during docker build: %v", err)
 			}
@@ -234,21 +234,21 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 
 			// loop through the template directories and create the id and url
 			for i := range templates {
-				Debug.Log("template is: ", templates[i])
+				rootConfig.Debug.Log("template is: ", templates[i])
 				if strings.Contains(templates[i], ".DS_Store") {
-					Debug.Log("Ignoring .DS_Store")
+					rootConfig.Debug.Log("Ignoring .DS_Store")
 					continue
 				}
 
 				sourceDir := filepath.Join(stackPath, "templates", templates[i])
-				Debug.Log("sourceDir is: ", sourceDir)
+				rootConfig.Debug.Log("sourceDir is: ", sourceDir)
 
 				// create name for the tar files
 				versionedArchive := filepath.Join(devLocal, stackID+".v"+stackYaml.Version+".templates.")
-				Debug.Log("versionedArchive is: ", versionedArchive)
+				rootConfig.Debug.Log("versionedArchive is: ", versionedArchive)
 
 				versionArchiveTar := versionedArchive + templates[i] + ".tar.gz"
-				Debug.Log("versionedArdhiveTar is: ", versionArchiveTar)
+				rootConfig.Debug.Log("versionedArdhiveTar is: ", versionArchiveTar)
 
 				if runtime.GOOS == "windows" {
 					// for windows, add a leading slash and convert to unix style slashes
@@ -265,7 +265,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 
 				// create a config yaml file for the tarball
 				configYaml := filepath.Join(templatePath, templates[i], ".appsody-config.yaml")
-				Debug.Log("configYaml is: ", configYaml)
+				rootConfig.Debug.Log("configYaml is: ", configYaml)
 
 				g, err := os.Create(configYaml)
 				if err != nil {
@@ -280,8 +280,8 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 				g.Close()
 
 				// tar the files
-				Info.Log("Creating tar for: " + templates[i])
-				err = Targz(sourceDir, versionedArchive)
+				rootConfig.Info.Log("Creating tar for: " + templates[i])
+				err = Targz(rootConfig.LoggingConfig, sourceDir, versionedArchive)
 				if err != nil {
 					return errors.Errorf("Error trying to tar: %v", err)
 				}
@@ -304,7 +304,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 				return errors.Errorf("Error trying to marshall: %v", err)
 			}
 
-			Info.Log("Writing: " + indexFileLocal)
+			rootConfig.Info.Log("Writing: " + indexFileLocal)
 			err = ioutil.WriteFile(indexFileLocal, source, 0644)
 			if err != nil {
 				return errors.Errorf("Error trying to read: %v", err)
@@ -323,7 +323,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 			if repo == nil || !strings.Contains(repo.URL, indexFileLocal) {
 				// the repo is setup wrong, delete and recreate it
 				if repo != nil {
-					Info.logf("Appsody repo %s is configured with the wrong URL. Deleting and recreating it.", repoName)
+					rootConfig.Info.logf("Appsody repo %s is configured with the wrong URL. Deleting and recreating it.", repoName)
 					repos.Remove(repoName)
 				}
 				// check for a different repo with the same file url
@@ -335,21 +335,21 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 					}
 				}
 				if repoNameToDelete != "" {
-					Info.logf("Appsody repo %s is configured with %s's URL. Deleting it to setup %s.", repoNameToDelete, repoName, repoName)
+					rootConfig.Info.logf("Appsody repo %s is configured with %s's URL. Deleting it to setup %s.", repoNameToDelete, repoName, repoName)
 					repos.Remove(repoNameToDelete)
 				}
 				err = repos.WriteFile(getRepoFileLocation(rootConfig))
 				if err != nil {
 					return errors.Errorf("Error writing to repo file %s. %v", getRepoFileLocation(rootConfig), err)
 				}
-				Info.Logf("Creating %s repository", repoName)
+				rootConfig.Info.Logf("Creating %s repository", repoName)
 				_, err = AddLocalFileRepo(repoName, indexFileLocal)
 				if err != nil {
 					return errors.Errorf("Error adding local repository. Your stack may not be available to appsody commands. %v", err)
 				}
 			}
 
-			Info.log("Your local stack is available as part of repo ", repoName)
+			rootConfig.Info.log("Your local stack is available as part of repo ", repoName)
 
 			return nil
 		},
@@ -365,7 +365,7 @@ func getLabelsForStackImage(stackID string, buildImage string, stackYaml StackYa
 
 	gitLabels, err := getGitLabels(config)
 	if err != nil {
-		Info.log(err)
+		config.Info.log(err)
 	} else {
 		if branchURL, ok := gitLabels[ociKeyPrefix+"source"]; ok {
 			if contextDir, ok := gitLabels[appsodyImageCommitKeyPrefix+"contextDir"]; ok {

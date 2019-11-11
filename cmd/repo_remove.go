@@ -40,7 +40,7 @@ func newRepoRemoveCmd(config *RootCommandConfig) *cobra.Command {
 				return repoErr
 			}
 			if config.Dryrun {
-				Info.log("Dry Run - Skipping appsody repo remove ", repoName)
+				config.Info.log("Dry Run - Skipping appsody repo remove ", repoName)
 			} else {
 				if repoFile.Has(repoName) {
 					defaultRepoName, err := repoFile.GetDefaultRepoName(config)
@@ -50,10 +50,10 @@ func newRepoRemoveCmd(config *RootCommandConfig) *cobra.Command {
 					if repoName != defaultRepoName {
 						repoFile.Remove(repoName)
 					} else {
-						Error.log("You cannot remove the default repository " + repoName)
+						config.Error.log("You cannot remove the default repository " + repoName)
 					}
 				} else {
-					Error.log("Repository is not in configured list of repositories")
+					config.Error.log("Repository is not in configured list of repositories")
 				}
 				err := repoFile.WriteFile(getRepoFileLocation(config))
 				if err != nil {

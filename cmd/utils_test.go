@@ -50,14 +50,10 @@ func TestGenYAML(t *testing.T) {
 
 			// Buffer cmd output, to be logged if there is a failure
 			var outBuffer bytes.Buffer
-			cmd.SetStdout(&outBuffer)
-			cmd.SetStderr(&outBuffer)
-			defer func() {
-				cmd.SetStdout(os.Stdout)
-				cmd.SetStderr(os.Stderr)
-			}()
+			config := &cmd.LoggingConfig{}
+			config.InitLogging(&outBuffer, &outBuffer)
 
-			yamlFileName, err := cmd.GenKnativeYaml(testGetter(), testPortNum, testServiceName, testImageName, testPullPolicy, "app-deploy.yaml", false)
+			yamlFileName, err := cmd.GenKnativeYaml(config, testGetter(), testPortNum, testServiceName, testImageName, testPullPolicy, "app-deploy.yaml", false)
 
 			if err != nil {
 				t.Log(outBuffer.String())
