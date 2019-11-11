@@ -126,21 +126,21 @@ func build(config *buildCommandConfig) error {
 	}
 
 	cmdArgs = append(cmdArgs, "-f", dockerfile, extractDir)
-	Debug.log("final cmd args", cmdArgs)
-	execError := DockerBuild(cmdArgs, DockerLog, config.Verbose, config.Dryrun)
+	config.Debug.log("final cmd args", cmdArgs)
+	execError := DockerBuild(config.RootCommandConfig, cmdArgs, config.DockerLog)
 
 	if execError != nil {
 		return execError
 	}
 	if config.pushURL != "" || config.push {
 
-		err := DockerPush(buildImage, config.Dryrun)
+		err := DockerPush(config.RootCommandConfig, buildImage, config.Dryrun)
 		if err != nil {
 			return errors.Errorf("Could not push the docker image - exiting. Error: %v", err)
 		}
 	}
 	if !config.Dryrun {
-		Info.log("Built docker image ", buildImage)
+		config.Info.log("Built docker image ", buildImage)
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func getLabels(config *RootCommandConfig) (map[string]string, error) {
 
 	gitLabels, err := getGitLabels(config)
 	if err != nil {
-		Info.log(err)
+		config.Info.log(err)
 	}
 
 	for key, value := range stackLabels {
@@ -194,13 +194,13 @@ func getLabels(config *RootCommandConfig) (map[string]string, error) {
 	return labels, nil
 }
 
-func convertLabelsToKubeFormat(labels map[string]string) map[string]string {
+func convertLabelsToKubeFormat(config *RootCommandConfig, labels map[string]string) map[string]string {
 	var kubeLabels = make(map[string]string)
 
 	for key, value := range labels {
 		newKey, err := ConvertLabelToKubeFormat(key)
 		if err != nil {
-			Debug.logf("Skipping image label \"%s\" - %v", key, err)
+			config.Debug.logf("Skipping image label \"%s\" - %v", key, err)
 		} else {
 			kubeLabels[newKey] = value
 		}

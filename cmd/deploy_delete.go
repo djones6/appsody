@@ -20,6 +20,7 @@ import (
 )
 
 func newDeleteDeploymentCmd(deployConfig *deployCommandConfig) *cobra.Command {
+	rootConfig := deployConfig.RootCommandConfig
 	var deployConfigFile string
 	var deleteDeploymentCmd = &cobra.Command{
 		Use:   "delete",
@@ -35,12 +36,12 @@ func newDeleteDeploymentCmd(deployConfig *deployCommandConfig) *cobra.Command {
 				return errors.Errorf("Cannot delete deployment. Deployment manifest not found: %s", deployConfigFile)
 			}
 
-			Info.log("Deleting deployment using deployment manifest ", deployConfigFile)
-			err = KubeDelete(deployConfigFile, deployConfig.namespace, deployConfig.Dryrun)
+			rootConfig.Info.log("Deleting deployment using deployment manifest ", deployConfigFile)
+			err = KubeDelete(rootConfig, deployConfigFile, deployConfig.namespace, deployConfig.Dryrun)
 			if err != nil {
 				return err
 			}
-			Info.log("Deployment deleted")
+			rootConfig.Info.log("Deployment deleted")
 			return nil
 		},
 	}

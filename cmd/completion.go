@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newCompletionCmd(rootCmd *cobra.Command) *cobra.Command {
+func newCompletionCmd(rootConfig *RootCommandConfig, rootCmd *cobra.Command) *cobra.Command {
 	// bash completions
 	var bashCompletionCmd = &cobra.Command{
 		Use:   "completion",
@@ -42,7 +42,7 @@ func newCompletionCmd(rootCmd *cobra.Command) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			buf := new(bytes.Buffer)
 
-			Debug.log("Running bash completion script")
+			rootConfig.Debug.log("Running bash completion script")
 			_ = rootCmd.GenBashCompletion(buf)
 			output := buf.String()
 			// We need to use real spaces because .GenBashCompletion does and formatting requires it

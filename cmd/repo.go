@@ -166,9 +166,9 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 		if fi, err := os.Stat(p); err != nil {
 
 			if rootConfig.Dryrun {
-				Info.log("Dry Run - Skipping create of directory ", p)
+				rootConfig.Info.log("Dry Run - Skipping create of directory ", p)
 			} else {
-				Debug.log("Creating ", p)
+				rootConfig.Debug.log("Creating ", p)
 				if err := os.MkdirAll(p, 0755); err != nil {
 					return errors.Errorf("Could not create %s: %s", p, err)
 
@@ -186,7 +186,7 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 	if file, err := os.Stat(repoFileLocation); err != nil {
 
 		if rootConfig.Dryrun {
-			Info.log("Dry Run - Skipping creation of incubator repo: ", incubatorRepositoryURL)
+			rootConfig.Info.log("Dry Run - Skipping creation of incubator repo: ", incubatorRepositoryURL)
 		} else {
 
 			repo := NewRepoFile()
@@ -199,7 +199,7 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 				Name: "experimental",
 				URL:  experimentalRepositoryURL,
 			})
-			Debug.log("Creating ", repoFileLocation)
+			rootConfig.Debug.log("Creating ", repoFileLocation)
 			if err := repo.WriteFile(repoFileLocation); err != nil {
 				return errors.Errorf("Error writing %s file: %s ", repoFileLocation, err)
 			}
@@ -211,9 +211,9 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 	defaultConfigFile := getDefaultConfigFile(rootConfig)
 	if _, err := os.Stat(defaultConfigFile); err != nil {
 		if rootConfig.Dryrun {
-			Info.log("Dry Run - Skip creation of default config file ", defaultConfigFile)
+			rootConfig.Info.log("Dry Run - Skip creation of default config file ", defaultConfigFile)
 		} else {
-			Debug.log("Creating ", defaultConfigFile)
+			rootConfig.Debug.log("Creating ", defaultConfigFile)
 			if err := ioutil.WriteFile(defaultConfigFile, []byte{}, 0644); err != nil {
 				return errors.Errorf("Error creating default config file %s", err)
 
@@ -222,9 +222,9 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 	}
 
 	if rootConfig.Dryrun {
-		Info.log("Dry Run - Skip writing config file ", defaultConfigFile)
+		rootConfig.Info.log("Dry Run - Skip writing config file ", defaultConfigFile)
 	} else {
-		Debug.log("Writing config file ", defaultConfigFile)
+		rootConfig.Debug.log("Writing config file ", defaultConfigFile)
 		if err := rootConfig.CliConfig.WriteConfig(); err != nil {
 			return errors.Errorf("Writing default config file %s", err)
 
@@ -233,10 +233,10 @@ func ensureConfig(rootConfig *RootCommandConfig) error {
 	return nil
 }
 
-func downloadIndex(url string) (*RepoIndex, error) {
-	Debug.log("Downloading appsody repository index from ", url)
+func downloadIndex(rootConfig *RootCommandConfig, url string) (*RepoIndex, error) {
+	rootConfig.Debug.log("Downloading appsody repository index from ", url)
 	indexBuffer := bytes.NewBuffer(nil)
-	err := downloadFile(url, indexBuffer)
+	err := downloadFile(rootConfig, url, indexBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -248,7 +248,7 @@ func downloadIndex(url string) (*RepoIndex, error) {
 	var index RepoIndex
 	err = yaml.Unmarshal(yamlFile, &index)
 	if err != nil {
-		Debug.logf("Contents of downloaded index from %s\n%s", url, yamlFile)
+		rootConfig.Debug.logf("Contents of downloaded index from %s\n%s", url, yamlFile)
 		return nil, fmt.Errorf("Repository index formatting error: %s", err)
 	}
 	return &index, nil
@@ -260,7 +260,7 @@ func (index *RepoIndex) listProjects(repoName string, config *RootCommandConfig)
 	table.MaxColWidth = 60
 	table.Wrap = true
 	if strings.Compare(index.APIVersion, supportedIndexAPIVersion) == 1 {
-		Debug.log("Adding unsupported repository", repoName)
+		config.Debug.log("Adding unsupported repository", repoName)
 		config.UnsupportedRepos = append(config.UnsupportedRepos, repoName)
 	}
 	table.AddRow("REPO", "ID", "VERSION  ", "TEMPLATES", "DESCRIPTION")
@@ -277,7 +277,7 @@ func (index *RepoIndex) listProjects(repoName string, config *RootCommandConfig)
 func (r *RepositoryFile) listRepoProjects(repoName string, config *RootCommandConfig) (string, error) {
 	if repo := r.GetRepo(repoName); repo != nil {
 		url := repo.URL
-		index, err := downloadIndex(url)
+		index, err := downloadIndex(config, url)
 		if err != nil {
 			return "", err
 		}
@@ -398,7 +398,7 @@ func (r *RepositoryFile) GetDefaultRepoName(rootConfig *RootCommandConfig) (stri
 	if err := r.WriteFile(getRepoFileLocation(rootConfig)); err != nil {
 		return "", err
 	}
-	Info.log("Your default repository is now set to ", repoName)
+	rootConfig.Info.log("Your default repository is now set to ", repoName)
 	return repoName, nil
 }
 
@@ -428,7 +428,7 @@ func (r *RepositoryFile) SetDefaultRepoName(name string, defaultRepoName string,
 	if err := r.WriteFile(getRepoFileLocation(rootConfig)); err != nil {
 		return "", err
 	}
-	Info.log("Your default repository is now set to ", repoName)
+	rootConfig.Info.log("Your default repository is now set to ", repoName)
 	return repoName, nil
 }
 
@@ -440,11 +440,11 @@ func (r *RepositoryFile) WriteFile(path string) error {
 	return ioutil.WriteFile(path, data, 0644)
 }
 
-func (r *RepositoryFile) GetIndices() (RepoIndices, error) {
+func (r *RepositoryFile) GetIndices(rootConfig *RootCommandConfig) (RepoIndices, error) {
 	indices := make(map[string]*RepoIndex)
 	brokenRepos := make([]indexError, 0)
 	for _, rf := range r.Repositories {
-		var index, err = downloadIndex(rf.URL)
+		var index, err = downloadIndex(rootConfig, rf.URL)
 		if err != nil {
 			repoErr := indexError{rf.Name, err}
 			brokenRepos = append(brokenRepos, repoErr)
@@ -519,16 +519,16 @@ func (r *RepositoryFile) listProjects(rootConfig *RootCommandConfig) (string, er
 	table.Wrap = true
 
 	table.AddRow("REPO", "ID", "VERSION  ", "TEMPLATES", "DESCRIPTION")
-	indices, err := r.GetIndices()
+	indices, err := r.GetIndices(rootConfig)
 
 	if err != nil {
-		Error.logf("The following indices could not be read, skipping:\n%v", err)
+		rootConfig.Error.logf("The following indices could not be read, skipping:\n%v", err)
 	}
 	if len(indices) != 0 {
 		for repoName, index := range indices {
 
 			if strings.Compare(index.APIVersion, supportedIndexAPIVersion) == 1 {
-				Debug.log("Adding unsupported repository", repoName)
+				rootConfig.Debug.log("Adding unsupported repository", repoName)
 				rootConfig.UnsupportedRepos = append(rootConfig.UnsupportedRepos, repoName)
 			}
 
@@ -567,11 +567,11 @@ type RepositoryOutputFormat struct {
 	Stacks []Stack `yaml:"stacks" json:"stacks"`
 }
 
-func (r *RepositoryFile) getRepositories() (IndexOutputFormat, error) {
+func (r *RepositoryFile) getRepositories(rootConfig *RootCommandConfig) (IndexOutputFormat, error) {
 	var indexOutput IndexOutputFormat
 	indexOutput.APIVersion = r.APIVersion
 	indexOutput.Generated = r.Generated
-	indices, err := r.GetIndices()
+	indices, err := r.GetIndices(rootConfig)
 	if err != nil {
 		return indexOutput, errors.Errorf("Could not read indices: %v", err)
 	}
@@ -587,11 +587,11 @@ func (r *RepositoryFile) getRepositories() (IndexOutputFormat, error) {
 	return indexOutput, nil
 }
 
-func (r *RepositoryFile) getRepository(repoName string) (IndexOutputFormat, error) {
+func (r *RepositoryFile) getRepository(rootConfig *RootCommandConfig, repoName string) (IndexOutputFormat, error) {
 	var indexOutput IndexOutputFormat
 	indexOutput.APIVersion = r.APIVersion
 	indexOutput.Generated = r.Generated
-	indices, err := r.GetIndices()
+	indices, err := r.GetIndices(rootConfig)
 	if err != nil {
 		return indexOutput, errors.Errorf("Could not read indices: %v", err)
 	}
