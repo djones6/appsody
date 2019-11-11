@@ -106,9 +106,6 @@ func TestListJson(t *testing.T) {
 	}
 
 	testContentsListOutput(t, list, output)
-	if t.Failed() {
-		t.Logf("Output from CLI:\n%s", output)
-	}
 }
 
 func TestListYaml(t *testing.T) {
@@ -126,9 +123,6 @@ func TestListYaml(t *testing.T) {
 	}
 
 	testContentsListOutput(t, list, output)
-	if t.Failed() {
-		t.Logf("Output from CLI:\n%s", output)
-	}
 }
 
 func TestListYamlSingleRepository(t *testing.T) {

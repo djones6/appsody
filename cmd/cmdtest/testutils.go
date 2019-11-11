@@ -36,13 +36,11 @@ type Repository struct {
 	URL  string
 }
 
-// RunAppsodyCmdExecDeprecated runs the appsody CLI with the given args in a new process
-// Deprecated: use RunAppsodyCmd instead, which does not require a new process or output
-// redirection.
+// RunAppsodyCmdExec runs the appsody CLI with the given args in a new process
 // The stdout and stderr are captured, printed, and returned
 // args will be passed to the appsody command
 // workingDir will be the directory the command runs in
-func RunAppsodyCmdExecDeprecated(args []string, workingDir string, t *testing.T) (string, error) {
+func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, error) {
 	execDir, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -103,7 +101,7 @@ func RunAppsodyCmdExecDeprecated(args []string, workingDir string, t *testing.T)
 }
 
 // RunAppsodyCmd runs the appsody CLI with the given args
-// The stdout and stderr are captured and returned
+// The stdout and stderr are captured, printed and returned
 // args will be passed to the appsody command
 // workingDir will be the directory the command runs in
 func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, error) {
@@ -111,17 +109,34 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 	args = append(args, "-v")
 
 	// Direct cmd console output to a buffer
-	var outBuffer bytes.Buffer
-	cmd.SetStdout(&outBuffer)
-	cmd.SetStderr(&outBuffer)
+	outReader, outWriter, _ := os.Pipe()
+	cmd.SetStdout(outWriter)
+	cmd.SetStderr(outWriter)
 	defer func() {
 		cmd.SetStdout(os.Stdout)
 		cmd.SetStderr(os.Stderr)
 	}()
 
+	// copy the output to the buffer, and also to the test log
+	var outBuffer bytes.Buffer
+	outScanner := bufio.NewScanner(outReader)
+	go func() {
+		for outScanner.Scan() {
+			out := outScanner.Bytes()
+			outBuffer.Write(out)
+			outBuffer.WriteByte('\n')
+			t.Log(string(out))
+		}
+	}()
+
 	err := cmd.ExecuteE("vlatest", workingDir, args)
 
+	// close the reader and writer
+	outWriter.Close()
+	outReader.Close()
+
 	return outBuffer.String(), err
+
 }
 
 // ParseRepoList takes in the string from 'appsody repo list' command
