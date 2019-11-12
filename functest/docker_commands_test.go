@@ -38,9 +38,8 @@ func TestDockerInspect(t *testing.T) {
 			var outBuffer bytes.Buffer
 			config := &cmd.LoggingConfig{}
 			config.InitLogging(&outBuffer, &outBuffer)
-			rootConfig := &cmd.RootCommandConfig{LoggingConfig: config}
 
-			out, err := cmd.RunDockerInspect(rootConfig, test.file)
+			out, err := cmd.RunDockerInspect(config, test.file)
 			t.Log(outBuffer.String())
 
 			if err == nil {

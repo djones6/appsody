@@ -35,10 +35,10 @@ func RunDockerCommandAndWait(config *RootCommandConfig, args []string, logger ap
 
 }
 
-func RunDockerInspect(config *RootCommandConfig, imageName string) (string, error) {
+func RunDockerInspect(log *LoggingConfig, imageName string) (string, error) {
 	cmdName := "docker"
 	cmdArgs := []string{"image", "inspect", imageName}
-	config.Debug.Logf("About to run %s with args %s ", cmdName, cmdArgs)
+	log.Debug.Logf("About to run %s with args %s ", cmdName, cmdArgs)
 	inspectCmd := exec.Command(cmdName, cmdArgs...)
 	output, err := SeperateOutput(inspectCmd)
 	return output, err
