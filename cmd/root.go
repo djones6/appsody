@@ -49,6 +49,7 @@ type RootCommandConfig struct {
 	UnsupportedRepos []string
 
 	// define the logging levels
+	// TODO: create logging struct
 	Info       appsodylogger
 	Warning    appsodylogger
 	Error      appsodylogger
