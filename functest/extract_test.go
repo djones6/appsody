@@ -14,6 +14,7 @@
 package functest
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -99,11 +100,14 @@ func TestExtract(t *testing.T) {
 		}
 		config := &cmd.RootCommandConfig{}
 		err = cmd.InitConfig(config)
+		var outBuffer bytes.Buffer
+		config.InitLogging(&outBuffer, &outBuffer)
 		if err != nil {
 			t.Fatal("Could not init appsody config", err)
 		}
 		mounts, _ := cmd.GetEnvVar("APPSODY_MOUNTS", config)
 		pDir, _ := cmd.GetEnvVar("APPSODY_PROJECT_DIR", config)
+		t.Log(outBuffer.String())
 
 		err = os.Chdir(oldDir)
 		if err != nil {
