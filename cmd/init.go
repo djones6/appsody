@@ -84,7 +84,7 @@ func initAppsody(stack string, template string, config *initCommandConfig) error
 	rootConfig := config.RootCommandConfig
 	noTemplate := config.noTemplate
 	if noTemplate {
-		rootConfig.Warning.log("The --no-template flag has been deprecated.  Please specify a template value of \"none\" instead.")
+		config.Warning.log("The --no-template flag has been deprecated.  Please specify a template value of \"none\" instead.")
 	}
 	valid, err := IsValidProjectName(config.projectName)
 	if !valid {

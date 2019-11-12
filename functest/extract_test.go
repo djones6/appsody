@@ -98,10 +98,11 @@ func TestExtract(t *testing.T) {
 		if err != nil {
 			t.Fatal("Error changing directory: ", err)
 		}
-		config := &cmd.RootCommandConfig{}
-		err = cmd.InitConfig(config)
 		var outBuffer bytes.Buffer
-		config.InitLogging(&outBuffer, &outBuffer)
+		loggingConfig := &cmd.LoggingConfig{}
+		loggingConfig.InitLogging(&outBuffer, &outBuffer)
+		config := &cmd.RootCommandConfig{LoggingConfig: loggingConfig}
+		err = cmd.InitConfig(config)
 		if err != nil {
 			t.Fatal("Could not init appsody config", err)
 		}

@@ -822,7 +822,7 @@ func getExposedPorts(config *RootCommandConfig) ([]string, error) {
 }
 
 //GenKnativeYaml generates a simple yaml for KNative serving
-func GenKnativeYaml(config *RootCommandConfig, yamlTemplate string, deployPort int, serviceName string, deployImage string, pullImage bool, configFile string, dryrun bool) (fileName string, yamlErr error) {
+func GenKnativeYaml(config *LoggingConfig, yamlTemplate string, deployPort int, serviceName string, deployImage string, pullImage bool, configFile string, dryrun bool) (fileName string, yamlErr error) {
 	// KNative serving YAML representation in a struct
 	type Y struct {
 		APIVersion string `yaml:"apiVersion"`

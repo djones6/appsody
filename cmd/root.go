@@ -38,7 +38,20 @@ var VERSION string
 
 const APIVersionV1 = "v1"
 
+type LoggingConfig struct {
+	// define the logging levels
+	Info       appsodylogger
+	Warning    appsodylogger
+	Error      appsodylogger
+	Debug      appsodylogger
+	Container  appsodylogger
+	InitScript appsodylogger
+	DockerLog  appsodylogger
+}
+
 type RootCommandConfig struct {
+	*LoggingConfig
+
 	CfgFile          string
 	Dryrun           bool
 	Verbose          bool
@@ -47,16 +60,6 @@ type RootCommandConfig struct {
 	ProjectConfig    *ProjectConfig
 	ProjectDir       string
 	UnsupportedRepos []string
-
-	// define the logging levels
-	// TODO: create logging struct
-	Info       appsodylogger
-	Warning    appsodylogger
-	Error      appsodylogger
-	Debug      appsodylogger
-	Container  appsodylogger
-	InitScript appsodylogger
-	DockerLog  appsodylogger
 
 	// package scoped, these are mostly for caching
 	setupConfigRun    bool
@@ -71,7 +74,9 @@ const ansi = "[\u001B\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#
 const operatorHome = "https://github.com/appsody/appsody-operator/releases/latest/download"
 
 func newRootCmd(projectDir string, outWriter, errWriter io.Writer, args []string) (*cobra.Command, *RootCommandConfig, error) {
-	rootConfig := &RootCommandConfig{}
+	loggingConfig := &LoggingConfig{}
+	loggingConfig.InitLogging(outWriter, errWriter)
+	rootConfig := &RootCommandConfig{LoggingConfig: loggingConfig}
 
 	rootConfig.ProjectDir = projectDir
 	rootCmd := &cobra.Command{
@@ -95,11 +100,11 @@ Complete documentation is available at https://appsody.dev`,
 	// later the Execute func will parse the flags again
 	rootCmd.FParseErrWhitelist = cobra.FParseErrWhitelist{UnknownFlags: true}
 	_ = rootCmd.ParseFlags(args) // ignore flag errors here because we haven't added all the commands
-	rootConfig.InitLogging(outWriter, errWriter)
 	setupErr := setupConfig(args, rootConfig)
 	if setupErr != nil {
 		return rootCmd, rootConfig, setupErr
 	}
+	rootConfig.initLogging()
 
 	rootCmd.AddCommand(
 		newInitCmd(rootConfig),
@@ -291,7 +296,7 @@ func (l appsodylogger) internalLog(msgString string, skipConsole bool, args ...i
 
 // InitLogging initializes the logging configuration for a given RootCommandConfig.
 // The initialization of klog is global and will only be performed once.
-func (config *RootCommandConfig) InitLogging(outWriter, errWriter io.Writer) {
+func (config *LoggingConfig) InitLogging(outWriter, errWriter io.Writer) {
 	config.Info = appsodylogger{name: "Info"}
 	config.Warning = appsodylogger{name: "Warning"}
 	config.Error = appsodylogger{name: "Error"}
@@ -306,6 +311,10 @@ func (config *RootCommandConfig) InitLogging(outWriter, errWriter io.Writer) {
 		l.outWriter = outWriter
 		l.errWriter = errWriter
 	}
+}
+
+func (config *RootCommandConfig) initLogging() {
+	var allLoggers = []*appsodylogger{&config.Info, &config.Warning, &config.Error, &config.Debug, &config.Container, &config.InitScript, &config.DockerLog}
 	if config.Verbose {
 		for _, l := range allLoggers {
 			l.verbose = true

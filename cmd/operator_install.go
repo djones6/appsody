@@ -64,7 +64,7 @@ func operatorInstall(config *operatorInstallCommandConfig) error {
 	if config.all {
 		watchNamespace = ""
 	}
-	rootConfig.Debug.log("watchNamespace is:  ", watchNamespace)
+	config.Debug.log("watchNamespace is:  ", watchNamespace)
 	operatorExists, existsErr := operatorExistsInNamespace(rootConfig, operatorNamespace, config.Dryrun)
 	if existsErr != nil {
 		return existsErr

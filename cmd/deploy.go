@@ -308,7 +308,6 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 }
 
 func deployWithKnative(config *deployCommandConfig) error {
-	rootConfig := config.RootCommandConfig
 	var err error
 	//Retrieve the project name and lowercase it
 	projectName, perr := getProjectName(config.RootCommandConfig)
@@ -348,21 +347,21 @@ func deployWithKnative(config *deployCommandConfig) error {
 	port, err := getEnvVarInt("PORT", config.RootCommandConfig)
 	if err != nil {
 		//try and get the exposed ports and use the first one
-		rootConfig.Warning.log("Could not detect a container port (PORT env var).")
+		config.Warning.log("Could not detect a container port (PORT env var).")
 		portsStr, portsErr := getExposedPorts(config.RootCommandConfig)
 		if portsErr != nil {
 			return portsErr
 		}
 		if len(portsStr) == 0 {
 			//No ports exposed
-			rootConfig.Warning.log("This container exposes no ports. The service will not be accessible.")
+			config.Warning.log("This container exposes no ports. The service will not be accessible.")
 			port = 0 //setting this to 0
 		} else {
 			portStr := portsStr[0]
-			rootConfig.Warning.log("Picking the first exposed port as the KNative service port. This may not be the correct port.")
+			config.Warning.log("Picking the first exposed port as the KNative service port. This may not be the correct port.")
 			port, err = strconv.Atoi(portStr)
 			if err != nil {
-				rootConfig.Warning.log("The exposed port is not a valid integer. The service will not be accessible.")
+				config.Warning.log("The exposed port is not a valid integer. The service will not be accessible.")
 				port = 0
 			}
 		}
@@ -373,23 +372,23 @@ func deployWithKnative(config *deployCommandConfig) error {
 		deployImage = config.pullURL + "/" + findNamespaceRepositoryAndTag(deployImage)
 	}
 	//Generating the KNative yaml file
-	rootConfig.Debug.logf("Calling GenKnativeYaml with parms: %s %d %s %s \n", knativeTempl, port, serviceName, deployImage)
-	yamlFileName, err := GenKnativeYaml(rootConfig, knativeTempl, port, serviceName, deployImage, config.push, config.appDeployFile, config.Dryrun)
+	config.Debug.logf("Calling GenKnativeYaml with parms: %s %d %s %s \n", knativeTempl, port, serviceName, deployImage)
+	yamlFileName, err := GenKnativeYaml(config.LoggingConfig, knativeTempl, port, serviceName, deployImage, config.push, config.appDeployFile, config.Dryrun)
 	if err != nil {
 		return errors.Errorf("Could not generate the KNative YAML file: %v", err)
 	}
-	rootConfig.Info.log("Generated KNative serving deploy file: ", yamlFileName)
-	err = KubeApply(rootConfig, yamlFileName, config.namespace, config.Dryrun)
+	config.Info.log("Generated KNative serving deploy file: ", yamlFileName)
+	err = KubeApply(config.RootCommandConfig, yamlFileName, config.namespace, config.Dryrun)
 	// Performing the kubectl apply
 	if err != nil {
 		return errors.Errorf("Failed to deploy to your Kubernetes cluster: %v", err)
 	}
-	rootConfig.Info.log("Deployment succeeded.")
-	url, err := KubeGetKnativeURL(rootConfig, serviceName, config.namespace, config.Dryrun)
+	config.Info.log("Deployment succeeded.")
+	url, err := KubeGetKnativeURL(config.RootCommandConfig, serviceName, config.namespace, config.Dryrun)
 	if err != nil {
 		return errors.Errorf("Failed to find deployed service in your Kubernetes cluster: %v", err)
 	}
-	rootConfig.Info.log("Your deployed service is available at the following URL: ", url)
+	config.Info.log("Your deployed service is available at the following URL: ", url)
 
 	return nil
 }

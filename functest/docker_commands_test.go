@@ -36,8 +36,9 @@ func TestDockerInspect(t *testing.T) {
 
 		t.Run(fmt.Sprintf("Test Invalid DockerInspect"), func(t *testing.T) {
 			var outBuffer bytes.Buffer
-			rootConfig := &cmd.RootCommandConfig{}
-			rootConfig.InitLogging(&outBuffer, &outBuffer)
+			config := &cmd.LoggingConfig{}
+			config.InitLogging(&outBuffer, &outBuffer)
+			rootConfig := &cmd.RootCommandConfig{LoggingConfig: config}
 
 			out, err := cmd.RunDockerInspect(rootConfig, test.file)
 			t.Log(outBuffer.String())
