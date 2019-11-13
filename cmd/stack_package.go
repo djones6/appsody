@@ -101,7 +101,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 				return errors.New("Unable to reach templates directory. Current directory must be the root of the stack")
 			}
 
-			appsodyHome := getHome(rootConfig)
+			appsodyHome := getHome(rootConfig.CliConfig)
 			rootConfig.Debug.Log("appsodyHome is:", appsodyHome)
 
 			devLocal := filepath.Join(appsodyHome, "stacks", "dev.local")
@@ -338,9 +338,9 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 					rootConfig.Info.logf("Appsody repo %s is configured with %s's URL. Deleting it to setup %s.", repoNameToDelete, repoName, repoName)
 					repos.Remove(repoNameToDelete)
 				}
-				err = repos.WriteFile(getRepoFileLocation(rootConfig))
+				err = repos.WriteFile(getRepoFileLocation(rootConfig.CliConfig))
 				if err != nil {
-					return errors.Errorf("Error writing to repo file %s. %v", getRepoFileLocation(rootConfig), err)
+					return errors.Errorf("Error writing to repo file %s. %v", getRepoFileLocation(rootConfig.CliConfig), err)
 				}
 				rootConfig.Info.Logf("Creating %s repository", repoName)
 				_, err = AddLocalFileRepo(repoName, indexFileLocal)

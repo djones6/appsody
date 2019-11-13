@@ -106,13 +106,33 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 // workingDir will be the directory the command runs in
 func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, error) {
 
-	args = append(args, "-v")
+	// TODO: only set --config if args doesn't already contain it
+
+	// Set up Appsody home directory for this test
+	defaults, err := cmd.ConfigDefaults()
+	if err != nil {
+		t.Fatal("Could not determine default home directory", err)
+	}
+	defaults.Home = filepath.Join(defaults.Home, "testhomes", t.Name())
+	cliConfig := cmd.InitConfig("", defaults)
+
+	// Buffer cmd output, to be logged if there is a failure
+	var outBuffer bytes.Buffer
+	log := &cmd.LoggingConfig{}
+	log.InitLogging(&outBuffer, &outBuffer)
+
+	cmd.EnsureConfig(log, cliConfig, false)
+	t.Log(outBuffer.String())
+	outBuffer.Reset()
+
+	// Set appsody args to use custom home directory
+	configFile := filepath.Join(defaults.Home, ".appsody.yaml")
+	args = append(args, "-v", "--config", configFile)
 
 	// Direct cmd console output to a buffer
 	outReader, outWriter, _ := os.Pipe()
 
 	// copy the output to the buffer, and also to the test log
-	var outBuffer bytes.Buffer
 	outScanner := bufio.NewScanner(outReader)
 	go func() {
 		for outScanner.Scan() {
@@ -123,7 +143,7 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 		}
 	}()
 
-	err := cmd.ExecuteE("vlatest", workingDir, outWriter, outWriter, args)
+	err = cmd.ExecuteE("vlatest", workingDir, outWriter, outWriter, args)
 
 	// close the reader and writer
 	outWriter.Close()
