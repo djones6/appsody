@@ -281,7 +281,7 @@ func newStackPackageCmd(rootConfig *RootCommandConfig) *cobra.Command {
 
 				// tar the files
 				rootConfig.Info.Log("Creating tar for: " + templates[i])
-				err = Targz(rootConfig, sourceDir, versionedArchive)
+				err = Targz(rootConfig.LoggingConfig, sourceDir, versionedArchive)
 				if err != nil {
 					return errors.Errorf("Error trying to tar: %v", err)
 				}

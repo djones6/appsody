@@ -48,15 +48,15 @@ To see a list of all your running docker containers, run the command "docker ps"
 				serviceArgs := []string{"service", serviceArgName}
 				deploymentArgs := []string{"deployment", deploymentArgName}
 				ingressArgs := []string{"ingress", ingressArgName}
-				_, err := RunKubeDelete(rootConfig, ingressArgs, rootConfig.Dryrun)
+				_, err := RunKubeDelete(rootConfig.LoggingConfig, ingressArgs, rootConfig.Dryrun)
 				if err != nil {
 					rootConfig.Error.logf("kubectl delete failed for ingress %s, due to %v", ingressArgName, err)
 				}
-				_, err = RunKubeDelete(rootConfig, serviceArgs, rootConfig.Dryrun)
+				_, err = RunKubeDelete(rootConfig.LoggingConfig, serviceArgs, rootConfig.Dryrun)
 				if err != nil {
 					rootConfig.Error.logf("kubectl delete failed for service %s, due to %v", serviceArgName, err)
 				}
-				_, err = RunKubeDelete(rootConfig, deploymentArgs, rootConfig.Dryrun)
+				_, err = RunKubeDelete(rootConfig.LoggingConfig, deploymentArgs, rootConfig.Dryrun)
 				if err != nil {
 					rootConfig.Error.logf("kubectl delete failed for deployment %s, due to %v", deploymentArgName, err)
 				}

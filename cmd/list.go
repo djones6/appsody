@@ -55,7 +55,7 @@ func newListCmd(rootConfig *RootCommandConfig) *cobra.Command {
 					return nil
 				}
 
-				list, err := repos.getRepositories(rootConfig)
+				list, err := repos.getRepositories(rootConfig.LoggingConfig)
 				if err != nil {
 					return err
 				}
@@ -95,7 +95,7 @@ func newListCmd(rootConfig *RootCommandConfig) *cobra.Command {
 					return nil
 				}
 
-				repoList, err := repos.getRepository(rootConfig, repoName)
+				repoList, err := repos.getRepository(rootConfig.LoggingConfig, repoName)
 				if err != nil {
 					return err
 				}

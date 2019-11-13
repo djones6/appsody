@@ -57,19 +57,19 @@ func (s *StackDetails) validateYaml(rootConfig *RootCommandConfig, stackPath str
 		stackLintErrorCount++
 	}
 
-	stackLintErrorCount += s.checkDefaultTemplate(rootConfig, arg)
+	stackLintErrorCount += s.checkDefaultTemplate(rootConfig.LoggingConfig, arg)
 	stackLintErrorCount += s.validateFields(rootConfig)
-	stackLintErrorCount += s.checkVersion(rootConfig)
-	stackLintErrorCount += s.checkDescLength(rootConfig)
+	stackLintErrorCount += s.checkVersion(rootConfig.LoggingConfig)
+	stackLintErrorCount += s.checkDescLength(rootConfig.LoggingConfig)
 	return stackLintErrorCount
 }
 
-func (s *StackDetails) checkDefaultTemplate(rootConfig *RootCommandConfig, arg string) int {
+func (s *StackDetails) checkDefaultTemplate(log *LoggingConfig, arg string) int {
 	stackLintErrorCount := 0
 	defaultTemplateFound := false
 	file, err := os.Open(arg)
 	if err != nil {
-		rootConfig.Error.log(err)
+		log.Error.log(err)
 	}
 	defer file.Close()
 
@@ -82,11 +82,11 @@ func (s *StackDetails) checkDefaultTemplate(rootConfig *RootCommandConfig, arg s
 	}
 
 	if err := scanner.Err(); err != nil {
-		rootConfig.Error.log(err)
+		log.Error.log(err)
 	}
 
 	if !defaultTemplateFound {
-		rootConfig.Error.log("Missing value for field: default-template")
+		log.Error.log("Missing value for field: default-template")
 		stackLintErrorCount++
 	}
 
@@ -106,12 +106,12 @@ func (s *StackDetails) validateFields(rootConfig *RootCommandConfig) int {
 		}
 	}
 
-	stackLintErrorCount += s.checkMaintainer(rootConfig, yamlValues)
+	stackLintErrorCount += s.checkMaintainer(rootConfig.LoggingConfig, yamlValues)
 	return stackLintErrorCount
 
 }
 
-func (s *StackDetails) checkMaintainer(rootConfig *RootCommandConfig, yamlValues []interface{}) int {
+func (s *StackDetails) checkMaintainer(log *LoggingConfig, yamlValues []interface{}) int {
 	stackLintErrorCount := 0
 	Map := make(map[string]interface{})
 	Map["maintainerEmails"] = yamlValues[5]
@@ -119,42 +119,42 @@ func (s *StackDetails) checkMaintainer(rootConfig *RootCommandConfig, yamlValues
 	maintainerEmails := Map["maintainerEmails"].([]StackMaintainer)
 
 	if len(maintainerEmails) == 0 {
-		rootConfig.Error.log("Email is not provided under field: maintainers")
+		log.Error.log("Email is not provided under field: maintainers")
 		stackLintErrorCount++
 	}
 
 	return stackLintErrorCount
 }
 
-func (s *StackDetails) checkVersion(rootConfig *RootCommandConfig) int {
+func (s *StackDetails) checkVersion(log *LoggingConfig) int {
 	stackLintErrorCount := 0
 	versionNo := strings.Split(s.Version, ".")
 
 	for _, mmp := range versionNo {
 		_, err := strconv.Atoi(mmp)
 		if err != nil {
-			rootConfig.Error.log("Each version field must be an integer")
+			log.Error.log("Each version field must be an integer")
 		}
 	}
 
 	if len(versionNo) < 3 {
-		rootConfig.Error.log("Version must contain 3 or 4 elements")
+		log.Error.log("Version must contain 3 or 4 elements")
 		stackLintErrorCount++
 	}
 
 	return stackLintErrorCount
 }
 
-func (s *StackDetails) checkDescLength(rootConfig *RootCommandConfig) int {
+func (s *StackDetails) checkDescLength(log *LoggingConfig) int {
 	stackLintErrorCount := 0
 
 	if len(s.Description) > 70 {
-		rootConfig.Error.log("Description must be under 70 characters")
+		log.Error.log("Description must be under 70 characters")
 		stackLintErrorCount++
 	}
 
 	if len(s.Name) > 30 {
-		rootConfig.Error.log("Stack name must be under 30 characters")
+		log.Error.log("Stack name must be under 30 characters")
 		stackLintErrorCount++
 	}
 

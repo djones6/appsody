@@ -53,9 +53,9 @@ func newOperatorCmd(rootConfig *RootCommandConfig) *cobra.Command {
 	return operatorCmd
 }
 
-func downloadOperatorYaml(rootConfig *RootCommandConfig, url string, operatorNamespace string, watchNamespace string, target string) (string, error) {
+func downloadOperatorYaml(log *LoggingConfig, url string, operatorNamespace string, watchNamespace string, target string) (string, error) {
 
-	file, err := downloadYaml(rootConfig, url, target)
+	file, err := downloadYaml(log, url, target)
 	if err != nil {
 		return "", fmt.Errorf("Could not download Operator YAML file %s", url)
 	}
@@ -80,13 +80,13 @@ func downloadOperatorYaml(rootConfig *RootCommandConfig, url string, operatorNam
 	return target, nil
 }
 
-func downloadRBACYaml(rootConfig *RootCommandConfig, url string, operatorNamespace string, target string, dryrun bool) (string, error) {
+func downloadRBACYaml(log *LoggingConfig, url string, operatorNamespace string, target string, dryrun bool) (string, error) {
 	if dryrun {
-		rootConfig.Info.log("Skipping download of RBAC yaml: ", url)
+		log.Info.log("Skipping download of RBAC yaml: ", url)
 		return "", nil
 
 	}
-	file, err := downloadYaml(rootConfig, url, target)
+	file, err := downloadYaml(log, url, target)
 	if err != nil {
 		return "", fmt.Errorf("Could not download RBAC YAML file %s", url)
 	}
@@ -111,11 +111,11 @@ func downloadRBACYaml(rootConfig *RootCommandConfig, url string, operatorNamespa
 	return target, nil
 }
 
-func downloadYaml(rootConfig *RootCommandConfig, url string, target string) (string, error) {
-	rootConfig.Debug.log("Downloading file: ", url)
+func downloadYaml(log *LoggingConfig, url string, target string) (string, error) {
+	log.Debug.log("Downloading file: ", url)
 
 	fileBuffer := bytes.NewBuffer(nil)
-	err := downloadFile(rootConfig, url, fileBuffer)
+	err := downloadFile(log, url, fileBuffer)
 	if err != nil {
 		return "", errors.Errorf("Failed to get file: %s", err)
 	}
@@ -132,8 +132,8 @@ func downloadYaml(rootConfig *RootCommandConfig, url string, target string) (str
 	return target, nil
 }
 
-func downloadCRDYaml(rootConfig *RootCommandConfig, url string, target string) (string, error) {
-	file, err := downloadYaml(rootConfig, url, target)
+func downloadCRDYaml(log *LoggingConfig, url string, target string) (string, error) {
+	file, err := downloadYaml(log, url, target)
 	if err != nil {
 		return "", fmt.Errorf("Could not download AppsodyApplication CRD file %s", url)
 	}

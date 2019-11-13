@@ -84,7 +84,7 @@ The stack name must start with a lowercase letter, and can contain only lowercas
 				}
 			}
 
-			err = downloadFileToDisk(rootConfig, "https://github.com/appsody/stacks/archive/master.zip", filepath.Join(getHome(rootConfig), "extract", "repo.zip"), config.Dryrun)
+			err = downloadFileToDisk(rootConfig.LoggingConfig, "https://github.com/appsody/stacks/archive/master.zip", filepath.Join(getHome(rootConfig), "extract", "repo.zip"), config.Dryrun)
 			if err != nil {
 				return err
 			}

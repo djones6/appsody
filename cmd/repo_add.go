@@ -62,7 +62,7 @@ func newRepoAddCmd(config *RootCommandConfig) *cobra.Command {
 				return errors.Errorf("A repository with the URL '%s' already exists.", repoURL)
 
 			}
-			index, err := downloadIndex(config, repoURL)
+			index, err := downloadIndex(config.LoggingConfig, repoURL)
 			if err != nil {
 
 				return err

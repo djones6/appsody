@@ -109,7 +109,7 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 			knative := config.knative
 			configFile := config.appDeployFile
 			// Check for the Appsody Operator
-			operatorExists, existingNamespace, operatorExistsErr := operatorExistsWithWatchspace(rootConfig, namespace, config.Dryrun)
+			operatorExists, existingNamespace, operatorExistsErr := operatorExistsWithWatchspace(config.LoggingConfig, namespace, config.Dryrun)
 			if operatorExistsErr != nil {
 				return operatorExistsErr
 			}
@@ -118,7 +118,7 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 			//_, err := KubeGet(kargs)
 			// Performing the kubectl apply
 			if !operatorExists {
-				rootConfig.Debug.logf("Failed to find Appsody operator that watches namespace %s. Attempting to install...", namespace)
+				config.Debug.logf("Failed to find Appsody operator that watches namespace %s. Attempting to install...", namespace)
 				operatorConfig := &operatorCommandConfig{config.RootCommandConfig, namespace}
 				operatorInstallConfig := &operatorInstallCommandConfig{operatorCommandConfig: operatorConfig}
 				//	operatorInstallConfig.RootCommandConfig = operatorConfig.RootCommandConfig
@@ -127,7 +127,7 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 					return errors.Errorf("Failed to install an Appsody operator in namespace %s watching namespace %s. Error was: %v", namespace, namespace, err)
 				}
 			} else {
-				rootConfig.Debug.logf("Operator exists in %s, watching %s ", existingNamespace, namespace)
+				config.Debug.logf("Operator exists in %s, watching %s ", existingNamespace, namespace)
 
 			}
 
@@ -139,14 +139,14 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 				err = generateDeploymentConfig(config)
 				if err != nil {
 					if err.Error() == "docker cp command failed: exit status 1" {
-						rootConfig.Warning.log("No deployment config is present in the stack. Falling back to default deploy config using Knative.")
+						config.Warning.log("No deployment config is present in the stack. Falling back to default deploy config using Knative.")
 						return deployWithKnative(config)
 					}
 					return err
 				}
 			}
 
-			rootConfig.Info.log("Found existing deployment manifest ", configFile)
+			config.Info.log("Found existing deployment manifest ", configFile)
 			//Retrieve the project name and lowercase it
 			var deployImage string
 			var appsodyApplication AppsodyApplication
@@ -160,7 +160,7 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 					return appErr
 				}
 				var applicationImage = appsodyApplication.Spec.ApplicationImage
-				rootConfig.Debug.log("Application Image:  ", applicationImage)
+				config.Debug.log("Application Image:  ", applicationImage)
 				if applicationImage == "" {
 					return deployWithKnative(config)
 				}
@@ -191,7 +191,7 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 
 				}
 				if strings.HasPrefix(deployImage, "dev.local") {
-					rootConfig.Warning.log("The push URL begins with dev.local.  Your push operation may fail if you are targeting a remote repository.  Make sure the --tag (-t) option is specified.  ", pushPath)
+					config.Warning.log("The push URL begins with dev.local.  Your push operation may fail if you are targeting a remote repository.  Make sure the --tag (-t) option is specified.  ", pushPath)
 				}
 				buildConfig.pushURL = config.pushURL
 
@@ -268,18 +268,18 @@ generates a deployment manifest (yaml) file if one is not present, and uses it t
 				}
 				w.Flush()
 			}
-			err = KubeApply(rootConfig, configFile, namespace, dryrun)
+			err = KubeApply(config.LoggingConfig, configFile, namespace, dryrun)
 			// Performing the kubectl apply
 			if err != nil {
 				return errors.Errorf("Failed to deploy to your Kubernetes cluster: %v", err)
 			}
 			if !dryrun {
-				rootConfig.Info.log("Deployment succeeded.")
+				config.Info.log("Deployment succeeded.")
 			}
 			// Ensure hostname and IP config is set up for deployment
 			time.Sleep(1 * time.Second)
-			rootConfig.Info.log("Appsody Deployment name is: ", appsodyApplication.Metadata.Name)
-			out, err := KubeGetDeploymentURL(rootConfig, appsodyApplication.Metadata.Name, namespace, dryrun)
+			config.Info.log("Appsody Deployment name is: ", appsodyApplication.Metadata.Name)
+			out, err := KubeGetDeploymentURL(config.LoggingConfig, appsodyApplication.Metadata.Name, namespace, dryrun)
 			// Performing the kubectl apply
 			if err != nil {
 				return errors.Errorf("Failed to find deployed service IP and Port: %s", err)
@@ -378,13 +378,13 @@ func deployWithKnative(config *deployCommandConfig) error {
 		return errors.Errorf("Could not generate the KNative YAML file: %v", err)
 	}
 	config.Info.log("Generated KNative serving deploy file: ", yamlFileName)
-	err = KubeApply(config.RootCommandConfig, yamlFileName, config.namespace, config.Dryrun)
+	err = KubeApply(config.LoggingConfig, yamlFileName, config.namespace, config.Dryrun)
 	// Performing the kubectl apply
 	if err != nil {
 		return errors.Errorf("Failed to deploy to your Kubernetes cluster: %v", err)
 	}
 	config.Info.log("Deployment succeeded.")
-	url, err := KubeGetKnativeURL(config.RootCommandConfig, serviceName, config.namespace, config.Dryrun)
+	url, err := KubeGetKnativeURL(config.LoggingConfig, serviceName, config.namespace, config.Dryrun)
 	if err != nil {
 		return errors.Errorf("Failed to find deployed service in your Kubernetes cluster: %v", err)
 	}
@@ -394,7 +394,6 @@ func deployWithKnative(config *deployCommandConfig) error {
 }
 
 func generateDeploymentConfig(config *deployCommandConfig) error {
-	rootConfig := config.RootCommandConfig
 	containerConfigDir := "/config/app-deploy.yaml"
 	configFile := config.appDeployFile
 
@@ -412,26 +411,26 @@ func generateDeploymentConfig(config *deployCommandConfig) error {
 	}
 	err = CheckPrereqs()
 	if err != nil {
-		rootConfig.Warning.logf("Failed to check prerequisites: %v\n", err)
+		config.Warning.logf("Failed to check prerequisites: %v\n", err)
 	}
 	stackImage := projectConfig.Stack
-	rootConfig.Debug.log("Stack image: ", stackImage)
-	rootConfig.Debug.log("Config directory: ", containerConfigDir)
+	config.Debug.log("Stack image: ", stackImage)
+	config.Debug.log("Config directory: ", containerConfigDir)
 
 	var cmdName string
 	var cmdArgs []string
-	pullErr := pullImage(stackImage, rootConfig)
+	pullErr := pullImage(stackImage, config.RootCommandConfig)
 	if pullErr != nil {
 		return pullErr
 	}
-	extractContainerName := defaultExtractContainerName(rootConfig)
+	extractContainerName := defaultExtractContainerName(config.RootCommandConfig)
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		err := dockerStop(rootConfig, extractContainerName, config.Dryrun)
+		err := dockerStop(config.RootCommandConfig, extractContainerName, config.Dryrun)
 		if err != nil {
-			rootConfig.Error.log(err)
+			config.Error.log(err)
 		}
 		os.Exit(1)
 	}()
@@ -441,31 +440,31 @@ func generateDeploymentConfig(config *deployCommandConfig) error {
 
 	cmdArgs = append([]string{"create"}, cmdArgs...)
 	cmdArgs = append(cmdArgs, stackImage)
-	err = execAndWaitReturnErr(rootConfig, cmdName, cmdArgs, rootConfig.Debug, config.Dryrun)
+	err = execAndWaitReturnErr(config.LoggingConfig, cmdName, cmdArgs, config.Debug, config.Dryrun)
 	if err != nil {
 
-		rootConfig.Error.log("docker create command failed: ", err)
-		removeErr := containerRemove(rootConfig, extractContainerName, false, config.Dryrun)
-		rootConfig.Error.log("Error in containerRemove", removeErr)
+		config.Error.log("docker create command failed: ", err)
+		removeErr := containerRemove(config.RootCommandConfig, extractContainerName, false, config.Dryrun)
+		config.Error.log("Error in containerRemove", removeErr)
 		return err
 	}
 	configDir = extractContainerName + ":" + containerConfigDir
 
 	cmdArgs = []string{"cp", configDir, "./" + configFile}
-	err = execAndWaitReturnErr(rootConfig, cmdName, cmdArgs, rootConfig.Debug, config.Dryrun)
+	err = execAndWaitReturnErr(config.LoggingConfig, cmdName, cmdArgs, config.Debug, config.Dryrun)
 	if err != nil {
-		rootConfig.Error.log("docker cp command failed: ", err)
+		config.Error.log("docker cp command failed: ", err)
 
-		removeErr := containerRemove(rootConfig, extractContainerName, false, config.Dryrun)
+		removeErr := containerRemove(config.RootCommandConfig, extractContainerName, false, config.Dryrun)
 		if removeErr != nil {
-			rootConfig.Error.log("containerRemove error ", removeErr)
+			config.Error.log("containerRemove error ", removeErr)
 		}
 		return errors.Errorf("docker cp command failed: %v", err)
 	}
 
-	removeErr := containerRemove(rootConfig, extractContainerName, false, config.Dryrun)
+	removeErr := containerRemove(config.RootCommandConfig, extractContainerName, false, config.Dryrun)
 	if removeErr != nil {
-		rootConfig.Error.log("containerRemove error ", removeErr)
+		config.Error.log("containerRemove error ", removeErr)
 	}
 
 	yamlReader, err := ioutil.ReadFile(configFile)
@@ -487,21 +486,21 @@ func generateDeploymentConfig(config *deployCommandConfig) error {
 	port, err := getEnvVarInt("PORT", config.RootCommandConfig)
 	if err != nil {
 		//try and get the exposed ports and use the first one
-		rootConfig.Warning.log("Could not detect a container port (PORT env var).")
+		config.Warning.log("Could not detect a container port (PORT env var).")
 		portsStr, portsErr := getExposedPorts(config.RootCommandConfig)
 		if portsErr != nil {
 			return portsErr
 		}
 		if len(portsStr) == 0 {
 			//No ports exposed
-			rootConfig.Warning.log("This container exposes no ports. The service will not be accessible.")
+			config.Warning.log("This container exposes no ports. The service will not be accessible.")
 			port = 0 //setting this to 0
 		} else {
 			portStr := portsStr[0]
-			rootConfig.Warning.log("Picking the first exposed port as the KNative service port. This may not be the correct port.")
+			config.Warning.log("Picking the first exposed port as the KNative service port. This may not be the correct port.")
 			port, err = strconv.Atoi(portStr)
 			if err != nil {
-				rootConfig.Warning.log("The exposed port is not a valid integer. The service will not be accessible.")
+				config.Warning.log("The exposed port is not a valid integer. The service will not be accessible.")
 				port = 0
 			}
 		}
@@ -539,7 +538,7 @@ func generateDeploymentConfig(config *deployCommandConfig) error {
 			return errors.Errorf("Could not get labels: %s", err)
 		}
 
-		labels = convertLabelsToKubeFormat(config.RootCommandConfig, labels)
+		labels = convertLabelsToKubeFormat(config.LoggingConfig, labels)
 
 		var selectedLabels = make(map[string]string)
 		for _, label := range supportedKubeLabels {
@@ -563,8 +562,8 @@ func generateDeploymentConfig(config *deployCommandConfig) error {
 			return errors.Errorf("Failed to write local application configuration file: %s", err)
 		}
 	} else {
-		rootConfig.Info.logf("Dry run skipped construction of file %s", configFile)
+		config.Info.logf("Dry run skipped construction of file %s", configFile)
 	}
-	rootConfig.Info.log("Created deployment manifest: ", configFile)
+	config.Info.log("Created deployment manifest: ", configFile)
 	return nil
 }

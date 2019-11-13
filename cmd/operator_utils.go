@@ -21,46 +21,46 @@ import (
 )
 
 //RunKubeExec issues kubectl exec <arg>
-func RunKubeExec(rootConfig *RootCommandConfig, args []string, dryrun bool) (string, error) {
-	rootConfig.Info.log("Attempting to get resource from Kubernetes ...")
+func RunKubeExec(log *LoggingConfig, args []string, dryrun bool) (string, error) {
+	log.Info.log("Attempting to get resource from Kubernetes ...")
 	kargs := []string{"exec"}
 	kargs = append(kargs, args...)
-	return RunKube(rootConfig, kargs, dryrun)
+	return RunKube(log, kargs, dryrun)
 
 }
 
 //RunKubeGet issues kubectl get <arg>
-func RunKubeGet(rootConfig *RootCommandConfig, args []string, dryrun bool) (string, error) {
-	rootConfig.Info.log("Attempting to get resource from Kubernetes ...")
+func RunKubeGet(log *LoggingConfig, args []string, dryrun bool) (string, error) {
+	log.Info.log("Attempting to get resource from Kubernetes ...")
 	kargs := []string{"get"}
 	kargs = append(kargs, args...)
-	return RunKube(rootConfig, kargs, dryrun)
+	return RunKube(log, kargs, dryrun)
 
 }
 
 //RunKubeDelete issues kubectl delete <args>
-func RunKubeDelete(rootConfig *RootCommandConfig, args []string, dryrun bool) (string, error) {
-	rootConfig.Info.log("Attempting to delete resource from Kubernetes ...")
+func RunKubeDelete(log *LoggingConfig, args []string, dryrun bool) (string, error) {
+	log.Info.log("Attempting to delete resource from Kubernetes ...")
 	kargs := []string{"delete"}
 	kargs = append(kargs, args...)
-	return RunKube(rootConfig, kargs, dryrun)
+	return RunKube(log, kargs, dryrun)
 }
 
 //RunKube runs a generic kubectl command
-func RunKube(rootConfig *RootCommandConfig, kargs []string, dryrun bool) (string, error) {
+func RunKube(log *LoggingConfig, kargs []string, dryrun bool) (string, error) {
 	kcmd := "kubectl"
 	if dryrun {
-		rootConfig.Info.log("Dry run - skipping execution of: ", kcmd, " ", strings.Join(kargs, " "))
+		log.Info.log("Dry run - skipping execution of: ", kcmd, " ", strings.Join(kargs, " "))
 		return "", nil
 	}
-	rootConfig.Info.log("Running command: ", kcmd, " ", strings.Join(kargs, " "))
+	log.Info.log("Running command: ", kcmd, " ", strings.Join(kargs, " "))
 	execCmd := exec.Command(kcmd, kargs...)
 	kout, kerr := execCmd.Output()
 
 	if kerr != nil {
 		return "", errors.Errorf("kubectl command failed: %s", string(kout[:]))
 	}
-	rootConfig.Debug.log("Command successful...")
+	log.Debug.log("Command successful...")
 	return string(kout[:]), nil
 }
 
@@ -127,20 +127,20 @@ func downloadRBACYaml(url string, operatorNamespace string, target string) (stri
 	return target, nil
 }
 */
-func operatorExistsInNamespace(rootConfig *RootCommandConfig, operatorNamespace string, dryrun bool) (bool, error) {
+func operatorExistsInNamespace(log *LoggingConfig, operatorNamespace string, dryrun bool) (bool, error) {
 
 	// check to see if this namespace already has an appsody-operator
 	//var args = []string{"deployment", "appsody-operator", "-n", operatorNamespace}
 	var args = []string{"deployments", "-o=jsonpath='{.items[?(@.metadata.name==\"appsody-operator\")].metadata.namespace}'", "-n", operatorNamespace}
 
-	getOutput, getErr := RunKubeGet(rootConfig, args, dryrun)
+	getOutput, getErr := RunKubeGet(log, args, dryrun)
 	if getErr != nil {
-		rootConfig.Debug.log("Received an err: ", getErr)
+		log.Debug.log("Received an err: ", getErr)
 		return false, getErr
 	}
 	getOutput = strings.Trim(getOutput, "'")
 	if getOutput == "" {
-		rootConfig.Info.log("There are no deployments with appsody-operator")
+		log.Info.log("There are no deployments with appsody-operator")
 		return false, nil
 	}
 	return true, nil
@@ -148,10 +148,10 @@ func operatorExistsInNamespace(rootConfig *RootCommandConfig, operatorNamespace 
 }
 
 // Check to see if any other operator is watching the watchNameSpace
-func operatorExistsWithWatchspace(rootConfig *RootCommandConfig, watchNamespace string, dryrun bool) (bool, string, error) {
-	rootConfig.Debug.log("Looking for an operator matching watchspace: ", watchNamespace)
+func operatorExistsWithWatchspace(log *LoggingConfig, watchNamespace string, dryrun bool) (bool, string, error) {
+	log.Debug.log("Looking for an operator matching watchspace: ", watchNamespace)
 	var namespacesWithOperatorsGetArgs = []string{"pods", "-o=jsonpath='{.items[?(@.metadata.labels.name==\"appsody-operator\")].metadata.namespace}’", "--all-namespaces"}
-	getNamespacesOutput, getNamespacesErr := RunKubeGet(rootConfig, namespacesWithOperatorsGetArgs, dryrun)
+	getNamespacesOutput, getNamespacesErr := RunKubeGet(log, namespacesWithOperatorsGetArgs, dryrun)
 
 	if getNamespacesErr != nil {
 		return false, "", getNamespacesErr
@@ -159,7 +159,7 @@ func operatorExistsWithWatchspace(rootConfig *RootCommandConfig, watchNamespace 
 	getNamespacesOutput = strings.Trim(getNamespacesOutput, "'’\n")
 
 	if getNamespacesOutput == "" {
-		rootConfig.Info.log("There are no deployments with appsody-operator")
+		log.Info.log("There are no deployments with appsody-operator")
 		return false, "", nil
 	}
 	if watchNamespace == "" && getNamespacesOutput != "" {
@@ -168,16 +168,16 @@ func operatorExistsWithWatchspace(rootConfig *RootCommandConfig, watchNamespace 
 	}
 
 	namespaces := strings.Split(getNamespacesOutput, " ")
-	rootConfig.Debug.log("namespaces with operators: ", namespaces)
+	log.Debug.log("namespaces with operators: ", namespaces)
 	for _, podNamespace := range namespaces {
 
-		podWatchSpace, watchspaceErr := getOperatorWatchspace(rootConfig, podNamespace, dryrun)
+		podWatchSpace, watchspaceErr := getOperatorWatchspace(log, podNamespace, dryrun)
 		if watchspaceErr != nil {
 			return false, "", watchspaceErr
 		}
 		// the operator is watching all namespaces
 		if podWatchSpace == "" {
-			rootConfig.Info.logf("An operator exists in namespace %s, that is watching all namespaces", podNamespace)
+			log.Info.logf("An operator exists in namespace %s, that is watching all namespaces", podNamespace)
 			return true, podNamespace, nil
 		}
 		// split the podwatchSpace by using new function
@@ -186,7 +186,7 @@ func operatorExistsWithWatchspace(rootConfig *RootCommandConfig, watchNamespace 
 		watchSpaces := getWatchSpaces(podWatchSpace, dryrun)
 		for _, value := range watchSpaces {
 			if value == watchNamespace {
-				rootConfig.Debug.logf("An operator that is watching namespace %s already exists in namespace %s", watchNamespace, podNamespace)
+				log.Debug.logf("An operator that is watching namespace %s already exists in namespace %s", watchNamespace, podNamespace)
 				return true, podNamespace, nil
 			}
 		}
@@ -238,40 +238,40 @@ func operatorExistsWithWatchspace(watchNamespace string, dryrun bool) (bool, str
 
 */
 
-func operatorCount(rootConfig *RootCommandConfig, dryrun bool) (int, error) {
+func operatorCount(log *LoggingConfig, dryrun bool) (int, error) {
 	var getAllOperatorsArgs = []string{"deployments", "-o=jsonpath='{.items[?(@.metadata.name==\"appsody-operator\")].metadata.name}'", "--all-namespaces"}
-	getOutput, getErr := RunKubeGet(rootConfig, getAllOperatorsArgs, dryrun)
+	getOutput, getErr := RunKubeGet(log, getAllOperatorsArgs, dryrun)
 	if getErr != nil {
 		return 0, getErr
 	}
 	return strings.Count(getOutput, "appsody-operator"), nil
 }
 
-func appsodyApplicationCount(rootConfig *RootCommandConfig, namespace string, dryrun bool) (int, error) {
+func appsodyApplicationCount(log *LoggingConfig, namespace string, dryrun bool) (int, error) {
 	var getAppsodyAppsArgs = []string{"AppsodyApplication", "-o=jsonpath='{.items[*].kind}'"}
 	if namespace == "" {
 		getAppsodyAppsArgs = append(getAppsodyAppsArgs, "--all-namespaces")
 	} else {
 		getAppsodyAppsArgs = append(getAppsodyAppsArgs, "-n", namespace)
 	}
-	getOutput, getErr := RunKubeGet(rootConfig, getAppsodyAppsArgs, dryrun)
+	getOutput, getErr := RunKubeGet(log, getAppsodyAppsArgs, dryrun)
 	if getErr != nil {
 		return 0, getErr
 	}
 	return strings.Count(getOutput, "AppsodyApplication"), nil
 }
 
-func deleteAppsodyApps(rootConfig *RootCommandConfig, namespace string, dryrun bool) (string, error) {
+func deleteAppsodyApps(log *LoggingConfig, namespace string, dryrun bool) (string, error) {
 	var deleteAppsodyAppsArgs = []string{"AppsodyApplication", "--all"}
 	if namespace != "" {
 		deleteAppsodyAppsArgs = append(deleteAppsodyAppsArgs, "-n", namespace)
 	}
-	return RunKubeDelete(rootConfig, deleteAppsodyAppsArgs, dryrun)
+	return RunKubeDelete(log, deleteAppsodyAppsArgs, dryrun)
 
 }
 
-func getOperatorWatchspace(rootConfig *RootCommandConfig, namespace string, dryrun bool) (string, error) {
-	operatorExists, existsErr := operatorExistsInNamespace(rootConfig, namespace, dryrun)
+func getOperatorWatchspace(log *LoggingConfig, namespace string, dryrun bool) (string, error) {
+	operatorExists, existsErr := operatorExistsInNamespace(log, namespace, dryrun)
 	if existsErr != nil {
 		return "", existsErr
 	}
@@ -281,7 +281,7 @@ func getOperatorWatchspace(rootConfig *RootCommandConfig, namespace string, dryr
 
 	var getPodWatchNamespaceArgs = []string{"pod", "-o=jsonpath='{.items[?(@.metadata.labels.name==\"appsody-operator\")].metadata.name}'", "-n", namespace}
 
-	getPodsOutput, getPodsErr := RunKubeGet(rootConfig, getPodWatchNamespaceArgs, dryrun)
+	getPodsOutput, getPodsErr := RunKubeGet(log, getPodWatchNamespaceArgs, dryrun)
 
 	if getPodsErr != nil {
 		return "", getPodsErr
@@ -291,7 +291,7 @@ func getOperatorWatchspace(rootConfig *RootCommandConfig, namespace string, dryr
 
 	getWatchspaceArgs := []string{"-n", namespace, "-it", podName, "--", "/bin/printenv", "WATCH_NAMESPACE"}
 
-	getWatchspaceOutput, getWatchspaceErr := RunKubeExec(rootConfig, getWatchspaceArgs, dryrun)
+	getWatchspaceOutput, getWatchspaceErr := RunKubeExec(log, getWatchspaceArgs, dryrun)
 
 	if getWatchspaceErr != nil {
 		return "", getWatchspaceErr
@@ -299,9 +299,9 @@ func getOperatorWatchspace(rootConfig *RootCommandConfig, namespace string, dryr
 
 	watchspaceForOperator := strings.Trim(getWatchspaceOutput, "'’\n")
 	if watchspaceForOperator == "" {
-		rootConfig.Debug.log("This operator watches the entire cluster ")
+		log.Debug.log("This operator watches the entire cluster ")
 	}
-	rootConfig.Debug.Logf("Pod: %s in namespace: %s is watching namespace: %s", podName, namespace, watchspaceForOperator)
+	log.Debug.Logf("Pod: %s in namespace: %s is watching namespace: %s", podName, namespace, watchspaceForOperator)
 
 	return watchspaceForOperator, nil
 }

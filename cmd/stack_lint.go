@@ -152,7 +152,7 @@ This command can be run from the base directory of your stack or you can supply 
 				}
 			}
 
-			dockerFileErrorCount, dockerFileWarningCount := lintDockerFileStack(rootConfig, stackPath)
+			dockerFileErrorCount, dockerFileWarningCount := lintDockerFileStack(rootConfig.LoggingConfig, stackPath)
 			stackLintErrorCount += dockerFileErrorCount
 			stackLintWarningCount += dockerFileWarningCount
 

@@ -24,7 +24,7 @@ func newDebugCmd(rootConfig *RootCommandConfig) *cobra.Command {
 		Long:  `This starts a docker based continuous build environment for your project with debugging enabled.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			rootConfig.Info.log("Running debug environment")
+			config.Info.log("Running debug environment")
 			return commonCmd(config, "debug")
 		},
 	}
