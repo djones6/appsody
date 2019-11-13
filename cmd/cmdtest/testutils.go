@@ -100,7 +100,17 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 	return outBuffer.String(), err
 }
 
-// RunAppsodyCmd runs the appsody CLI with the given args
+func inArray(haystack []string, needle string) bool {
+	for _, value := range haystack {
+		if needle == value {
+			return true
+		}
+	}
+	return false
+}
+
+// RunAppsodyCmd runs the appsody CLI with the given args, in a custom
+// home directory named after the currently executing test.
 // The stdout and stderr are captured, printed and returned
 // args will be passed to the appsody command
 // workingDir will be the directory the command runs in
@@ -108,11 +118,38 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 
 	args = append(args, "-v")
 
+	// TODO: make sure test home dirs are purged before tests are run
+
+	if !inArray(args, "--config") {
+		// Set appsody args to use custom home directory. Create the directory
+		// if it does not already exist.
+		testHomeDir := filepath.Join(os.TempDir(), "AppsodyTests", t.Name())
+		err := os.MkdirAll(testHomeDir, 0755)
+		if err != nil {
+			return "", err
+		}
+		configFile := filepath.Join(testHomeDir, "config.yaml")
+
+		// Create the config file if it does not already exist.
+		if _, err := os.Stat(configFile); os.IsNotExist(err) {
+			data := []byte("home: " + testHomeDir + "\n" + "generated-by-tests: Yes" + "\n")
+			err = ioutil.WriteFile(configFile, data, 0644)
+			if err != nil {
+				return "", err
+			}
+		}
+
+		// Pass custom config file to appsody
+		args = append(args, "--config", configFile)
+	}
+
+	// // Buffer cmd output, to be logged if there is a failure
+	var outBuffer bytes.Buffer
+
 	// Direct cmd console output to a buffer
 	outReader, outWriter, _ := os.Pipe()
 
 	// copy the output to the buffer, and also to the test log
-	var outBuffer bytes.Buffer
 	outScanner := bufio.NewScanner(outReader)
 	go func() {
 		for outScanner.Scan() {

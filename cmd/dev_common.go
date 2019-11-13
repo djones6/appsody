@@ -145,7 +145,7 @@ func commonCmd(config *devCommonConfig, mode string) error {
 		config.Debug.log("Overriding appsody-controller mount with APPSODY_MOUNT_CONTROLLER env variable: ", destController)
 	} else {
 		// Copy the controller from the installation directory to the home (.appsody)
-		destController = filepath.Join(getHome(config.RootCommandConfig), "appsody-controller")
+		destController = filepath.Join(getHome(config.CliConfig), "appsody-controller")
 		// config.Debug.log("Attempting to load the controller from ", destController)
 		//if _, err := os.Stat(destController); os.IsNotExist(err) {
 		// Always copy it from the executable dir
