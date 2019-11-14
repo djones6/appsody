@@ -122,7 +122,10 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 	// Create the config file if it does not already exist.
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		data := []byte("home: " + testHomeDir + "\n" + "generated-by-tests: Yes" + "\n")
-		ioutil.WriteFile(configFile, data, 0644)
+		err = ioutil.WriteFile(configFile, data, 0644)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// Pass custom config file to appsody
