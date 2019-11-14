@@ -100,34 +100,36 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 	return outBuffer.String(), err
 }
 
-// RunAppsodyCmd runs the appsody CLI with the given args
+// RunAppsodyCmd runs the appsody CLI with the given args, in a custom
+// home directory named after the currently executing test.
 // The stdout and stderr are captured, printed and returned
 // args will be passed to the appsody command
 // workingDir will be the directory the command runs in
 func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, error) {
 
-	// TODO: only set --config if args doesn't already contain it
+	// TODO 1: only set --config if args doesn't already contain it
+	// TODO 2: make sure test home dirs are purged before tests are run
 
-	// Set up Appsody home directory for this test
-	defaults, err := cmd.ConfigDefaults()
+	// Set appsody args to use custom home directory. Create the directory
+	// if it does not already exist.
+	testHomeDir := filepath.Join(os.TempDir(), "AppsodyTests", t.Name())
+	err := os.MkdirAll(testHomeDir, 0755)
 	if err != nil {
-		t.Fatal("Could not determine default home directory", err)
+		return "", err
 	}
-	defaults.Home = filepath.Join(defaults.Home, "testhomes", t.Name())
-	cliConfig := cmd.InitConfig("", defaults)
+	configFile := filepath.Join(testHomeDir, "config.yaml")
 
-	// Buffer cmd output, to be logged if there is a failure
-	var outBuffer bytes.Buffer
-	log := &cmd.LoggingConfig{}
-	log.InitLogging(&outBuffer, &outBuffer)
+	// Create the config file if it does not already exist.
+	if _, err := os.Stat(configFile); os.IsNotExist(err) {
+		data := []byte("home: " + testHomeDir + "\n" + "generated-by-tests: Yes" + "\n")
+		ioutil.WriteFile(configFile, data, 0644)
+	}
 
-	cmd.EnsureConfig(log, cliConfig, false)
-	t.Log(outBuffer.String())
-	outBuffer.Reset()
-
-	// Set appsody args to use custom home directory
-	configFile := filepath.Join(defaults.Home, ".appsody.yaml")
+	// Pass custom config file to appsody
 	args = append(args, "-v", "--config", configFile)
+
+	// // Buffer cmd output, to be logged if there is a failure
+	var outBuffer bytes.Buffer
 
 	// Direct cmd console output to a buffer
 	outReader, outWriter, _ := os.Pipe()
