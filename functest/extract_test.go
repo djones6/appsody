@@ -106,7 +106,7 @@ func TestExtract(t *testing.T) {
 		if err != nil {
 			t.Fatal("Could not determine default home directory", err)
 		}
-		config.CliConfig = cmd.InitConfig(config, defaults)
+		config.CliConfig = cmd.InitConfig("", defaults)
 		mounts, _ := cmd.GetEnvVar("APPSODY_MOUNTS", config)
 		pDir, _ := cmd.GetEnvVar("APPSODY_PROJECT_DIR", config)
 		t.Log(outBuffer.String())
