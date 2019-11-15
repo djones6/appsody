@@ -100,6 +100,15 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 	return outBuffer.String(), err
 }
 
+func inArray(haystack []string, needle string) bool {
+	for _, value := range haystack {
+		if needle == value {
+			return true
+		}
+	}
+	return false
+}
+
 // RunAppsodyCmd runs the appsody CLI with the given args, in a custom
 // home directory named after the currently executing test.
 // The stdout and stderr are captured, printed and returned
@@ -107,29 +116,32 @@ func RunAppsodyCmdExec(args []string, workingDir string, t *testing.T) (string, 
 // workingDir will be the directory the command runs in
 func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, error) {
 
-	// TODO 1: only set --config if args doesn't already contain it
-	// TODO 2: make sure test home dirs are purged before tests are run
+	args = append(args, "-v")
 
-	// Set appsody args to use custom home directory. Create the directory
-	// if it does not already exist.
-	testHomeDir := filepath.Join(os.TempDir(), "AppsodyTests", t.Name())
-	err := os.MkdirAll(testHomeDir, 0755)
-	if err != nil {
-		return "", err
-	}
-	configFile := filepath.Join(testHomeDir, "config.yaml")
+	// TODO: make sure test home dirs are purged before tests are run
 
-	// Create the config file if it does not already exist.
-	if _, err := os.Stat(configFile); os.IsNotExist(err) {
-		data := []byte("home: " + testHomeDir + "\n" + "generated-by-tests: Yes" + "\n")
-		err = ioutil.WriteFile(configFile, data, 0644)
+	if !inArray(args, "--config") {
+		// Set appsody args to use custom home directory. Create the directory
+		// if it does not already exist.
+		testHomeDir := filepath.Join(os.TempDir(), "AppsodyTests", t.Name())
+		err := os.MkdirAll(testHomeDir, 0755)
 		if err != nil {
 			return "", err
 		}
-	}
+		configFile := filepath.Join(testHomeDir, "config.yaml")
 
-	// Pass custom config file to appsody
-	args = append(args, "-v", "--config", configFile)
+		// Create the config file if it does not already exist.
+		if _, err := os.Stat(configFile); os.IsNotExist(err) {
+			data := []byte("home: " + testHomeDir + "\n" + "generated-by-tests: Yes" + "\n")
+			err = ioutil.WriteFile(configFile, data, 0644)
+			if err != nil {
+				return "", err
+			}
+		}
+
+		// Pass custom config file to appsody
+		args = append(args, "--config", configFile)
+	}
 
 	// // Buffer cmd output, to be logged if there is a failure
 	var outBuffer bytes.Buffer
@@ -148,7 +160,7 @@ func RunAppsodyCmd(args []string, workingDir string, t *testing.T) (string, erro
 		}
 	}()
 
-	err = cmd.ExecuteE("vlatest", workingDir, outWriter, outWriter, args)
+	err := cmd.ExecuteE("vlatest", workingDir, outWriter, outWriter, args)
 
 	// close the reader and writer
 	outWriter.Close()
